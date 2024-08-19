@@ -28,3 +28,6 @@ max_training_time_seconds = 60
 # How long to try optimise the combinations to send back to the user
 combination_testing_time_seconds = 10
 
+# What level of confidence a prediction must have to pass and be categorised
+prediction_confidence_threshold = 0.3
+

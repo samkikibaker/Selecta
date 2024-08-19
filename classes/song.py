@@ -11,11 +11,11 @@ class Song:
     def __init__(
             self,
             path,
-            is_categorised=False,
 
     ):
         self.path = path
-        self.is_categorised = is_categorised
+        self.is_categorised = False
+        self.is_root = False
         self.name = self.get_song_name_from_path()
         self.category = self.get_song_category_from_path()
         self.yamnet_embeddings, self.log_mel_spectrogram = self.extract_audio_features()

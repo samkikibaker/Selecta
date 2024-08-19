@@ -77,6 +77,7 @@ class DataModel:
             else:
                 root_song_objects = random.sample(songs_in_category, num_roots)
             for song in root_song_objects:
+                song.is_root = True
                 song.is_categorised = True
                 song.predicted_category = song.category
         return self.song_objects

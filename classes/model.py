@@ -2,6 +2,7 @@ from math import floor
 import keras
 import numpy as np
 import math
+import pandas as pd
 
 from keras.models import Sequential
 from keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, BatchNormalization, Activation, Input
@@ -12,7 +13,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 
 from classes.early_stopping import TimeBasedStopping
-from config import max_training_time_seconds, combination_testing_time_seconds
+from config import max_training_time_seconds, combination_testing_time_seconds, prediction_confidence_threshold
 
 
 class Model:
@@ -22,10 +23,11 @@ class Model:
         self.transfer_learning_model = self.configure_transfer_learning_model()
         self.transfer_learning_model = self.fit_transfer_learning_model()
         self.predict_song_categories()
+        self.investigate_confidence_threshold()
+        self.assign_song_categories()
 
     def split_data_train_test(self):
         """Split the data into training and test sets"""
-        train_test_data = {}
         X_train, X_test, y_train, y_test = [], [], [], []
         for song in self.data_model.song_objects:
             # Use already categorised songs as training data
@@ -104,6 +106,9 @@ class Model:
             # Compute the prediction confidence metric
             song.prediction_confidence_score = self.assess_prediction_confidence(avg_prediction)
 
+        self.median_prediction_confidence = np.median([song.prediction_confidence_score for song in self.data_model.song_objects])
+        print(f"Median Prediction Confidence {self.median_prediction_confidence}")
+
     @staticmethod
     def assess_prediction_confidence(avg_prediction):
         """Before the model had seen any data or knows anything about the distribution of categories, its best guess would be to assign a
@@ -122,5 +127,39 @@ class Model:
         confidence = (entropy_uniform - entropy) / entropy_uniform
 
         return confidence
+
+    def assign_song_categories(self):
+        for song in self.data_model.song_objects:
+            if song.prediction_confidence_score >= prediction_confidence_threshold:
+                song.is_categorised = True
+
+    def investigate_confidence_threshold(self):
+        confidence_thresholds = np.linspace(0, 1, num=101)
+        uncategorised_songs = [song for song in self.data_model.song_objects if not song.is_categorised]
+        results = []
+        for threshold in confidence_thresholds:
+            songs_above_threshold = [song for song in uncategorised_songs if song.prediction_confidence_score >= threshold]
+            correctly_categorised_songs = [song for song in songs_above_threshold if song.predicted_category == song.category]
+            results.append({
+                "threshold": threshold,
+                "perc_songs_above_threshold": len(songs_above_threshold) / len(uncategorised_songs),
+                "accuracy": len(correctly_categorised_songs) / len(songs_above_threshold) if len(songs_above_threshold) > 0 else None,
+            })
+        df = pd.DataFrame(results)
+
+        import matplotlib.pyplot as plt
+        import matplotlib
+
+        matplotlib.use('MacOSX')
+        plt.ion()
+
+        # Plotting
+        plt.figure(figsize=(10, 6))
+        plt.plot(df['threshold'], df['perc_songs_above_threshold'], label='perc_songs_above_threshold')
+        plt.plot(df['threshold'], df['accuracy'], label='accuracy')
+
+        plt.xlabel('Confidence Threshold')
+        plt.legend()  # Adding a legend
+        plt.show()  # Displaying the plot
 
 
