@@ -1,8 +1,8 @@
-from math import floor
+import random
 import librosa
-from config import root_directory, num_mfcc
-import tensorflow as tf
-import tensorflow_io as tfio
+import numpy as np
+
+from config import root_directory, yamnet_model
 
 
 class Song:
@@ -18,8 +18,7 @@ class Song:
         self.is_categorised = is_categorised
         self.name = self.get_song_name_from_path()
         self.category = self.get_song_category_from_path()
-        self.mfcc_features = self.extract_mfcc_features()
-        self.mono_wav_features = self.load_wav_16k_mono()
+        self.yamnet_embeddings, self.log_mel_spectrogram = self.extract_audio_features()
         self.predicted_category = None
 
     def get_song_category_from_path(self):
@@ -30,26 +29,32 @@ class Song:
         song_name = self.path.split("/")[-1]
         return song_name
 
-    def extract_mfcc_features(self):
-        """Turn an audio file into an mfcc feature representation"""
-        try:
-            audio, sampling_rate = librosa.load(self.path)
-            mfccs = librosa.feature.mfcc(y=audio, sr=sampling_rate, n_mfcc=num_mfcc, hop_length=floor(sampling_rate))
-            features = mfccs.T
-            return features
-        except Exception as e:
-            song_name = self.path.split("/")[-1]
-            print(f"Error extracting features for {song_name}: {e}")
-            return None
+    def extract_audio_features(self):
 
-    @tf.function
-    def load_wav_16k_mono(self):
-        """ Load a WAV file, convert it to a float tensor, resample to 16 kHz single-channel audio. """
-        file_contents = tf.io.read_file(self.path)
-        wav, sample_rate = tf.audio.decode_wav(
-            file_contents,
-            desired_channels=1)
-        wav = tf.squeeze(wav, axis=-1)
-        sample_rate = tf.cast(sample_rate, dtype=tf.int64)
-        wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
-        return wav
+        try:
+            # Load the audio file with librosa
+            audio, sampling_rate = librosa.load(self.path, sr=None)
+
+            # Convert to mono if the audio is stereo
+            if audio.ndim > 1:
+                audio = librosa.to_mono(audio)
+
+            # Resample to 16 kHz
+            audio = librosa.resample(audio, orig_sr=sampling_rate, target_sr=16000)
+
+            # Normalise to the range [-1, 1]
+            max_abs_value = float(np.max(np.abs(audio), axis=0))
+            if max_abs_value == 0:
+                max_abs_value = 1  # Avoid division by zero by setting max_abs_value to 1 where it is 0
+            audio /= max_abs_value
+
+            scores, embeddings, log_mel_spectrogram = yamnet_model(audio)
+
+            yamnet_embeddings = np.array(embeddings)
+            log_mel_spectrogram = np.array(log_mel_spectrogram)
+
+            return yamnet_embeddings, log_mel_spectrogram
+
+        except Exception as e:
+            print(f"Error loading or processing audio file {self.path}: {e}")
+            return None

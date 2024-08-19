@@ -1,4 +1,6 @@
-from classes.songs import Songs
+from classes.data_model import DataModel
+from classes.model import Model
 
 if __name__ == '__main__':
-    songs = Songs()
+    data_model = DataModel()
+    model = Model(data_model)
