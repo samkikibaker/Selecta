@@ -88,21 +88,24 @@ class Model:
         for song in self.data_model.song_objects:
             predictions = self.transfer_learning_model.model.predict(song.yamnet_embeddings)
 
-            # avg_prediction = np.mean(predictions, axis=0)
-            # predicted_category_encoded = np.argmax(avg_prediction)
-            # song.predicted_category = self.data_model.category_encoder.classes_[predicted_category_encoded]
-
-            max_columns = np.argmax(predictions, axis=1)
-            counts = np.bincount(max_columns, minlength=predictions.shape[1])
-            predicted_category_encoded = np.argmax(counts)
+            # Average predictions across segments and choose the category with the highest overall prediction
+            avg_prediction = np.mean(predictions, axis=0)
+            predicted_category_encoded = np.argmax(avg_prediction)
             song.predicted_category = self.data_model.category_encoder.classes_[predicted_category_encoded]
+
+            # TODO - Validate that this approach is worse than above
+            # Categorise each segment then choose the modal category across all segments
+            # max_columns = np.argmax(predictions, axis=1)
+            # counts = np.bincount(max_columns, minlength=predictions.shape[1])
+            # predicted_category_encoded = np.argmax(counts)
+            # song.predicted_category = self.data_model.category_encoder.classes_[predicted_category_encoded]
 
         accuracy = len(
             [song for song in self.data_model.song_objects if song.predicted_category == song.category and not song.is_categorised]
         ) / len(
             [song for song in self.data_model.song_objects if not song.is_categorised]
         )
-        print(accuracy)
+        print(f"Accuracy: {accuracy}")
 
 
 
