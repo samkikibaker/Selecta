@@ -1,6 +1,7 @@
 from math import floor
 import keras
 import numpy as np
+import math
 
 from keras.models import Sequential
 from keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, BatchNormalization, Activation, Input
@@ -100,12 +101,26 @@ class Model:
             # predicted_category_encoded = np.argmax(counts)
             # song.predicted_category = self.data_model.category_encoder.classes_[predicted_category_encoded]
 
-        accuracy = len(
-            [song for song in self.data_model.song_objects if song.predicted_category == song.category and not song.is_categorised]
-        ) / len(
-            [song for song in self.data_model.song_objects if not song.is_categorised]
-        )
-        print(f"Accuracy: {accuracy}")
+            # Compute the prediction confidence metric
+            song.prediction_confidence_score = self.assess_prediction_confidence(avg_prediction)
 
+    @staticmethod
+    def assess_prediction_confidence(avg_prediction):
+        """Before the model had seen any data or knows anything about the distribution of categories, its best guess would be to assign a
+        song to one of the n categories with equal likelihood. Therefore, a prediction distribution [1/n, ... , 1/n] represents absolute
+        ignorance. Conversely, a distribution with all zeros except for one value of 1 represents perfect learning. The confidence  metric
+        computed in this method uses entropy to quantify where a prediction lies on a scale [0, 1] where 0 represents absolute ignorance and
+        1 represents perfect learning."""
+        # Compute entropy
+        entropy = -sum(p * math.log(p) for p in avg_prediction if p > 0)
+
+        # Compute the entropy for a uniform distribution
+        n = len(avg_prediction)
+        entropy_uniform = math.log(n)
+
+        # Compute the confidence metric
+        confidence = (entropy_uniform - entropy) / entropy_uniform
+
+        return confidence
 
 
