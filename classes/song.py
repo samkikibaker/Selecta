@@ -18,8 +18,10 @@ class Song:
         self.is_root = False
         self.name = self.get_song_name_from_path()
         self.category = self.get_song_category_from_path()
+        self.category_encoded = None
         self.yamnet_embeddings, self.log_mel_spectrogram = self.extract_audio_features()
         self.predicted_category = None
+        self.predicted_category_encoded = None
 
     def get_song_category_from_path(self):
         song_category = self.path.split(f"{root_directory}/")[-1].split("/")[0]

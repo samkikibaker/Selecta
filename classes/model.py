@@ -1,3 +1,4 @@
+import operator
 from math import floor
 import keras
 import numpy as np
@@ -13,7 +14,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 
 from classes.early_stopping import TimeBasedStopping
-from config import max_training_time_seconds, combination_testing_time_seconds, prediction_confidence_threshold
+from config import max_training_time_seconds, prediction_confidence_threshold, num_manual_per_round
 
 
 class Model:
@@ -23,18 +24,25 @@ class Model:
         self.transfer_learning_model = self.configure_transfer_learning_model()
         self.transfer_learning_model = self.fit_transfer_learning_model()
         self.predict_song_categories()
-        self.investigate_confidence_threshold()
+        # self.investigate_confidence_threshold()
         self.assign_song_categories()
+        self.manually_categorise_unconfident_songs()
 
     def split_data_train_test(self):
         """Split the data into training and test sets"""
         X_train, X_test, y_train, y_test = [], [], [], []
         for song in self.data_model.song_objects:
-            # Use already categorised songs as training data
-            if song.is_categorised:
+            if song.is_root:
+                # If the song is a root use its true category and add it to the training data
                 y_train.append(song.category_encoded)
                 X_train.append(song.yamnet_embeddings)
+            elif song.is_categorised:
+                # If the song is not a root but has been categorised (i.e. predicted) use its predicted category and add it to the training
+                # data
+                y_train.append(song.predicted_category_encoded)
+                X_train.append(song.yamnet_embeddings)
             else:
+                # If the song has not been categorised add it to the test data
                 y_test.append(song.category_encoded)
                 X_test.append(song.yamnet_embeddings)
 
@@ -89,24 +97,25 @@ class Model:
 
     def predict_song_categories(self):
         for song in self.data_model.song_objects:
-            predictions = self.transfer_learning_model.model.predict(song.yamnet_embeddings)
+            if not song.is_categorised:
+                predictions = self.transfer_learning_model.model.predict(song.yamnet_embeddings)
 
-            # Average predictions across segments and choose the category with the highest overall prediction
-            avg_prediction = np.mean(predictions, axis=0)
-            predicted_category_encoded = np.argmax(avg_prediction)
-            song.predicted_category = self.data_model.category_encoder.classes_[predicted_category_encoded]
+                # Average predictions across segments and choose the category with the highest overall prediction
+                avg_prediction = np.mean(predictions, axis=0)
+                predicted_category_encoded = np.argmax(avg_prediction)
+                song.predicted_category = self.data_model.category_encoder.classes_[predicted_category_encoded]
 
-            # TODO - Validate that this approach is worse than above
-            # Categorise each segment then choose the modal category across all segments
-            # max_columns = np.argmax(predictions, axis=1)
-            # counts = np.bincount(max_columns, minlength=predictions.shape[1])
-            # predicted_category_encoded = np.argmax(counts)
-            # song.predicted_category = self.data_model.category_encoder.classes_[predicted_category_encoded]
+                # TODO - Validate that this approach is worse than above
+                # Categorise each segment then choose the modal category across all segments
+                # max_columns = np.argmax(predictions, axis=1)
+                # counts = np.bincount(max_columns, minlength=predictions.shape[1])
+                # predicted_category_encoded = np.argmax(counts)
+                # song.predicted_category = self.data_model.category_encoder.classes_[predicted_category_encoded]
 
-            # Compute the prediction confidence metric
-            song.prediction_confidence_score = self.assess_prediction_confidence(avg_prediction)
+                # Compute the prediction confidence metric
+                song.prediction_confidence_score = self.assess_prediction_confidence(avg_prediction)
 
-        self.median_prediction_confidence = np.median([song.prediction_confidence_score for song in self.data_model.song_objects])
+        self.median_prediction_confidence = np.median([song.prediction_confidence_score for song in self.data_model.song_objects if not song.is_categorised])
         print(f"Median Prediction Confidence {self.median_prediction_confidence}")
 
     @staticmethod
@@ -130,8 +139,14 @@ class Model:
 
     def assign_song_categories(self):
         for song in self.data_model.song_objects:
-            if song.prediction_confidence_score >= prediction_confidence_threshold:
+            if not song.is_categorised and song.prediction_confidence_score >= prediction_confidence_threshold:
                 song.is_categorised = True
+
+                # Encode the predicted category to apply this prediction to use within the training data
+                num_rows = song.yamnet_embeddings.shape[0]
+                predicted_category_column = np.full((num_rows, 1), song.predicted_category)
+                predicted_category_encoded = self.data_model.category_encoder.transform(predicted_category_column)
+                song.predicted_category_encoded = predicted_category_encoded
 
     def investigate_confidence_threshold(self):
         confidence_thresholds = np.linspace(0, 1, num=101)
@@ -161,5 +176,17 @@ class Model:
         plt.xlabel('Confidence Threshold')
         plt.legend()  # Adding a legend
         plt.show()  # Displaying the plot
+
+    def manually_categorise_unconfident_songs(self):
+        uncategorised_songs = [song for song in self.data_model.song_objects if not song.is_categorised]
+        uncategorised_songs.sort(key=operator.attrgetter('prediction_confidence_score'))
+        end_index = min(num_manual_per_round, len(uncategorised_songs))
+        for song in uncategorised_songs[0:end_index]:
+            song.is_root = True
+            song.is_categorised = True
+
+        # Update counts of categorised/uncategorised songs
+        self.data_model.num_uncategorised_songs = len([song for song in self.data_model.song_objects if not song.is_categorised])
+        self.data_model.num_categorised_songs = len([song for song in self.data_model.song_objects if song.is_categorised])
 
 
