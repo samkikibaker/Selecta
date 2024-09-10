@@ -19,6 +19,7 @@ class DataModel:
         self.song_objects = self.load_or_create_song_objects()
 
         self.categories = list(set(song.category for song in self.song_objects))
+        self.num_categories = len(self.categories)
         self.category_encoder = LabelBinarizer().fit(self.categories)
         self.song_objects = self.encode_categories()
 

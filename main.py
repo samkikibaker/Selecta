@@ -1,11 +1,17 @@
 from classes.data_model import DataModel
-from classes.model import Model
+from classes.model import AbstractModel, TransferLearningModel, ClusteringModel
 
 if __name__ == '__main__':
     data_model = DataModel()
+
+    # Clustering Model
+    clustering_model = ClusteringModel(data_model)
+
+
+    # Transfer Learning Model
     loop_counter = 0
     while data_model.num_uncategorised_songs > 0:  # and loop_counter < 5:
-        model = Model(data_model)
+        transfer_learning_model = TransferLearningModel(data_model)
         loop_counter += 1
         print(f"{data_model.num_uncategorised_songs} remaining songs to categorise")
     uncategorised_songs = [song for song in data_model.song_objects if not song.is_categorised]

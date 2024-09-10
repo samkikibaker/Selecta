@@ -10,6 +10,7 @@ from keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, BatchNor
 from keras.callbacks import EarlyStopping
 from keras.regularizers import l1, l2
 from keras.optimizers import Adam
+from sklearn.cluster import KMeans
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 
@@ -17,14 +18,19 @@ from classes.early_stopping import TimeBasedStopping
 from config import max_training_time_seconds, prediction_confidence_threshold, num_manual_per_round
 
 
-class Model:
+class AbstractModel:
     def __init__(self, data_model=None):
         self.data_model = data_model
+
+
+class TransferLearningModel(AbstractModel):
+    def __init__(self, data_model=None):
+        super().__init__(data_model)
         self.train_test_data = self.split_data_train_test()
-        self.transfer_learning_model = self.configure_transfer_learning_model()
-        self.transfer_learning_model = self.fit_transfer_learning_model()
+        self.model = self.configure_model()
+        self.model = self.fit_model()
         self.predict_song_categories()
-        # self.investigate_confidence_threshold()
+        self.investigate_confidence_threshold()
         self.assign_song_categories()
         self.manually_categorise_unconfident_songs()
 
@@ -61,7 +67,7 @@ class Model:
         }
         return train_test_data
 
-    def configure_transfer_learning_model(self):
+    def configure_model(self):
         dense_layer_size = self.train_test_data['y_train'].shape[1]  # Number of categories
 
         seq_model = Sequential([
@@ -73,10 +79,10 @@ class Model:
         seq_model.summary()
         return seq_model
 
-    def fit_transfer_learning_model(self):
+    def fit_model(self):
         optimizer = Adam(learning_rate=0.1)  # Set your desired learning rate here
 
-        self.transfer_learning_model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+        self.model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
         # Stop early if accuracy doesn't improve for 5 consecutive epochs
         early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
@@ -85,7 +91,7 @@ class Model:
         time_based_stopping = TimeBasedStopping(max_training_time_seconds)
 
         callbacks = [early_stopping, time_based_stopping]
-        fitted_model = self.transfer_learning_model.fit(
+        fitted_model = self.model.fit(
             self.train_test_data['X_train'],
             self.train_test_data['y_train'],
             batch_size=256,
@@ -98,7 +104,7 @@ class Model:
     def predict_song_categories(self):
         for song in self.data_model.song_objects:
             if not song.is_categorised:
-                predictions = self.transfer_learning_model.model.predict(song.yamnet_embeddings)
+                predictions = self.model.model.predict(song.yamnet_embeddings)
 
                 # Average predictions across segments and choose the category with the highest overall prediction
                 avg_prediction = np.mean(predictions, axis=0)
@@ -115,7 +121,8 @@ class Model:
                 # Compute the prediction confidence metric
                 song.prediction_confidence_score = self.assess_prediction_confidence(avg_prediction)
 
-        self.median_prediction_confidence = np.median([song.prediction_confidence_score for song in self.data_model.song_objects if not song.is_categorised])
+        self.median_prediction_confidence = np.median(
+            [song.prediction_confidence_score for song in self.data_model.song_objects if not song.is_categorised])
         print(f"Median Prediction Confidence {self.median_prediction_confidence}")
 
     @staticmethod
@@ -190,3 +197,33 @@ class Model:
         self.data_model.num_categorised_songs = len([song for song in self.data_model.song_objects if song.is_categorised])
 
 
+class ClusteringModel(AbstractModel):
+    def __init__(self, data_model=None):
+        super().__init__(data_model)
+        self.num_clusters = self.data_model.num_categories  # math.ceil(len(self.data_model.song_objects) / 5)  #
+        self.model = self.configure_model()
+        self.model = self.fit_model()
+
+    def configure_model(self):
+        kmeans_model = KMeans(n_clusters=self.num_clusters, random_state=0)
+        return kmeans_model
+
+    def fit_model(self):
+        # List to store song names and their corresponding embeddings
+        data = []
+
+        for song in self.data_model.song_objects:
+            # Store each song's name and its aggregated YAMNET embeddings in a row
+            data.append([song.name] + list(song.aggregated_yamnet_embeddings))
+
+        # Convert to a DataFrame, where the first column is the song name, and the rest are embeddings
+        df = pd.DataFrame(data, columns=['song_name'] + [f'embedding_{i}' for i in range(len(song.aggregated_yamnet_embeddings))])
+
+        # Extract the embeddings (i.e., all columns except 'song_name')
+        X = df.drop('song_name', axis=1).values
+
+        # Run K-Means clustering on the embeddings
+        df['cluster'] = self.model.fit_predict(X)  # Add cluster labels to the DataFrame
+
+        cluster_df = df[['song_name', 'cluster']].sort_values(by=['cluster', 'song_name'])
+        return cluster_df
