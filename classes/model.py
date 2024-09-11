@@ -21,14 +21,14 @@ from config import max_training_time_seconds, prediction_confidence_threshold, n
 class AbstractModel:
     def __init__(self, data_model=None):
         self.data_model = data_model
+        self.train_test_data = self.split_data_train_test()
+        self.model = self.configure_model()
+        self.model = self.fit_model()
 
 
 class TransferLearningModel(AbstractModel):
     def __init__(self, data_model=None):
         super().__init__(data_model)
-        self.train_test_data = self.split_data_train_test()
-        self.model = self.configure_model()
-        self.model = self.fit_model()
         self.predict_song_categories()
         self.investigate_confidence_threshold()
         self.assign_song_categories()
@@ -200,12 +200,13 @@ class TransferLearningModel(AbstractModel):
 class ClusteringModel(AbstractModel):
     def __init__(self, data_model=None):
         super().__init__(data_model)
-        self.num_clusters = self.data_model.num_categories  # math.ceil(len(self.data_model.song_objects) / 5)  #
-        self.model = self.configure_model()
-        self.model = self.fit_model()
+
+    def split_data_train_test(self):
+        pass
 
     def configure_model(self):
-        kmeans_model = KMeans(n_clusters=self.num_clusters, random_state=0)
+        num_clusters = self.data_model.num_categories  # math.ceil(len(self.data_model.song_objects) / 5)  #
+        kmeans_model = KMeans(n_clusters=num_clusters, random_state=0)
         return kmeans_model
 
     def fit_model(self):

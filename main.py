@@ -5,8 +5,7 @@ if __name__ == '__main__':
     data_model = DataModel()
 
     # Clustering Model
-    clustering_model = ClusteringModel(data_model)
-
+    clustering_model = ClusteringModel(data_model=data_model)
 
     # Transfer Learning Model
     loop_counter = 0
