@@ -1,9 +1,11 @@
 import operator
+
 from math import floor
 import keras
 import numpy as np
 import math
 import pandas as pd
+import random
 
 from keras.models import Sequential
 from keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, BatchNormalization, Activation, Input
@@ -13,9 +15,10 @@ from keras.optimizers import Adam
 from sklearn.cluster import KMeans
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
+from sklearn.metrics.pairwise import cosine_similarity
 
 from classes.early_stopping import TimeBasedStopping
-from config import max_training_time_seconds, prediction_confidence_threshold, num_manual_per_round
+from config import max_training_time_seconds, prediction_confidence_threshold, num_manual_per_round, num_roots
 
 
 class AbstractModel:
@@ -228,3 +231,47 @@ class ClusteringModel(AbstractModel):
 
         cluster_df = df[['song_name', 'cluster']].sort_values(by=['cluster', 'song_name'])
         return cluster_df
+
+
+class RankingModel(AbstractModel):
+    def __init__(self, data_model=None):
+        super().__init__(data_model)
+
+    def split_data_train_test(self):
+        pass
+
+    def configure_model(self):
+        pass
+
+    def fit_model(self):
+        root_songs = [song for song in self.data_model.song_objects if song.is_root]
+        if len(root_songs) != 1:
+            for song in root_songs:
+                song.is_root = False
+            root_song = random.sample(self.data_model.song_objects, 1)
+            root_song[0].is_root = True
+
+        # Get the root song's embedding and reshape it
+        root_song_embedding = [
+            song.aggregated_yamnet_embeddings for song in self.data_model.song_objects if song.is_root
+        ][0].reshape(1, -1)
+
+        # Calculate similarity for each song
+        for song in self.data_model.song_objects:
+            # Reshape song's embedding and calculate similarity
+            song.similarity_to_root = cosine_similarity(
+                song.aggregated_yamnet_embeddings.reshape(1, -1),
+                root_song_embedding)[0][0]
+
+        # Create DataFrame
+        similarity_df = pd.DataFrame({
+            'song_name': [song.name for song in self.data_model.song_objects],
+            'similarity_to_root': [song.similarity_to_root for song in self.data_model.song_objects]
+        })
+
+        # Sort DataFrame by similarity
+        similarity_df.sort_values(by='similarity_to_root', ascending=False, inplace=True)
+
+        return similarity_df
+
+

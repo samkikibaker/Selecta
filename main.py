@@ -1,11 +1,14 @@
 from classes.data_model import DataModel
-from classes.model import AbstractModel, TransferLearningModel, ClusteringModel
+from classes.model import AbstractModel, TransferLearningModel, ClusteringModel, RankingModel
 
 if __name__ == '__main__':
     data_model = DataModel()
 
     # Clustering Model
     clustering_model = ClusteringModel(data_model=data_model)
+
+    # Clustering Model
+    ranking_model = RankingModel(data_model=data_model)
 
     # Transfer Learning Model
     loop_counter = 0
