@@ -16,6 +16,7 @@ if __name__ == "__main__":
 
     # Check if running inside the container using the environment variable
     in_container = os.getenv("IN_CONTAINER", "false").lower() == "true"
+    print(f"IN_CONTAINER: {in_container}")
 
     # If inside container, adjust the song object paths
     if in_container:
