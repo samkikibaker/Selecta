@@ -1,0 +1,8 @@
+-   repo: https://github.com/charliermarsh/ruff
+    rev: v0.0.237  # replace with the latest version of ruff
+    hooks:
+    -   id: ruff
+        name: ruff
+        entry: ruff --fix
+        language: python
+        files: \.py$
