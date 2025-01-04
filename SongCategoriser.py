@@ -4,12 +4,14 @@ import joblib
 import librosa
 import numpy as np
 import pandas as pd
+import multiprocessing
 
-from multiprocessing import Pool
 from scipy.spatial.distance import cdist
 from tqdm import tqdm
 
 from config import num_processes, yamnet_model
+
+multiprocessing.set_start_method('spawn', force=True)
 
 class Song:
     """Class to represent a song"""
@@ -28,7 +30,11 @@ class Song:
 
         try:
             # Load the audio file with librosa
-            audio, sampling_rate = librosa.load(self.path, sr=16000, mono=True, duration=60)
+            try:
+                audio, sampling_rate = librosa.load(self.path, sr=16000, mono=True, offset=30, duration=60)
+            except librosa.util.exceptions.ParameterError:
+                print(f"Offset exceeds file length for {self.path}, loading from beginning instead.")
+                audio, sampling_rate = librosa.load(self.path, sr=16000, mono=True, offset=0, duration=60)
 
             # Normalise to the range [-1, 1]
             max_abs_value = float(np.max(np.abs(audio), axis=0))
@@ -85,12 +91,13 @@ class SongCategoriser:
             for filename in fnmatch.filter(filenames, '*.mp3'):
                 mp3_path = os.path.abspath(os.path.join(dirpath, filename))
                 mp3_file_paths.append(mp3_path)
+        print(f"MP3 paths: {mp3_file_paths}")
         return mp3_file_paths
 
     def load_or_create_song_objects(self):
-        if os.path.exists('cache/songs'):
+        try:
             song_objects = joblib.load('cache/songs')
-        else:
+        except FileNotFoundError:
             song_objects = self.create_and_cache_song_objects()
         return song_objects
 
@@ -102,7 +109,7 @@ class SongCategoriser:
 
     def create_and_cache_song_objects(self):
         # Use tqdm_map to show progress
-        with Pool(processes=num_processes) as pool:
+        with multiprocessing.pool.ThreadPool(processes=num_processes) as pool:
             song_objects = list(tqdm(pool.imap(self.create_song_object, self.song_paths), total=len(self.song_paths)))
 
         pool.close()
@@ -136,23 +143,28 @@ class SongCategoriser:
         # Initialize similarity matrix
         similarity_matrix = pd.DataFrame(np.nan, index=song_names, columns=song_names)
 
-        # Compute mean distances for each song pair
-        for i, song in tqdm(enumerate(self.song_objects), total=len(self.song_objects)):
-            for j in range(i, len(self.song_objects)):  # Start from i to avoid redundant calculations
-                mask1 = song_indices == i
-                mask2 = song_indices == j
-                mean_distance = distances[mask1][:, mask2].mean()
+        # Use numpy's upper triangle index for efficient iteration
+        upper_triangle_indices = np.triu_indices(len(self.song_objects), k=1)
 
-                # Fill both [i, j] and [j, i] with the calculated distance
-                similarity_matrix.at[song.name, self.song_objects[j].name] = mean_distance
-                similarity_matrix.at[self.song_objects[j].name, song.name] = mean_distance
+        # Iterate over unique song pairs using combinations and tqdm for progress tracking
+        for i, j in tqdm(
+                zip(upper_triangle_indices[0], upper_triangle_indices[1]),
+                total=len(upper_triangle_indices[0]),
+                desc="Computing similarity matrix"
+        ):
+            mask1 = song_indices == i
+            mask2 = song_indices == j
+            mean_distance = distances[mask1][:, mask2].mean()
+
+            # Direct assignment with .iloc
+            similarity_matrix.iloc[i, j] = mean_distance
+            similarity_matrix.iloc[j, i] = mean_distance
 
         return similarity_matrix
 
 if __name__ == '__main__':
-    song_categoriser = SongCategoriser()
-
-    # Save to cache
-    if os.path.exists('cache/song_categoriser'):
-        os.remove('cache/song_categoriser')
-    joblib.dump(song_categoriser, 'cache/song_categoriser')
+    try:
+        song_categoriser = joblib.load('cache/song_categoriser')
+    except FileNotFoundError:
+        song_categoriser = SongCategoriser()
+        joblib.dump(song_categoriser, 'cache/song_categoriser')

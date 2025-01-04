@@ -12,9 +12,9 @@ root_directory = '/Users/sambaker/Downloads/Music/Bandcamp/4. Peak'
 
 cache_path = f"cache/{root_directory.split('/')[-1]}"
 
-# yamnet_model_handle = 'https://kaggle.com/models/google/yamnet/frameworks/TensorFlow2/variations/yamnet/versions/1'
-yamnet_model_handle = 'https://www.kaggle.com/models/google/yamnet/TensorFlow2/yamnet/1'
-yamnet_model = load(yamnet_model_handle)
+# yamnet_model_handle = 'https://www.kaggle.com/models/google/yamnet/TensorFlow2/yamnet/1'
+yamnet_model_path = 'yamnet-tensorflow2-yamnet-v1'
+yamnet_model = load(yamnet_model_path)
 
 # How many songs to send each round
 num_roots = 5
