@@ -1,6 +1,4 @@
-# Selecta
-
-## Overview
+## Selecta
 
 Selecta is a tool designed to help DJs and music enthusiasts easily categorize their music and create playlists. This version of the tool uses a Docker container to process your music files and provides an interactive interface through a Streamlit app.
 
@@ -16,46 +14,48 @@ To use Selecta, you will need:
 ## Step-by-Step Guide
 
 ### 1. Clone the Repository
-
-1. 🖥️ Open a terminal (Command Prompt, PowerShell, or Terminal).
-2. 📋 Copy and paste the following command:
+- 🖥️ Open a terminal (Command Prompt, PowerShell, or Terminal).
+- 📋 Copy and paste the following command:
    ```bash
    git clone https://github.com/samkikibaker/Selecta.git
    ```
-3. 📂 Navigate into the repository folder:
+- 📂 Navigate into the repository folder:
    ```bash
    cd Selecta
    ```
 
 ### 2. Add Your Music
 
-1. 🎵 Locate the Selecta folder on your computer.
-2. 📁 Copy your music files into the `songs` directory within the repository folder.
-   - Example path: `Selecta/songs`
+- 🎵 Locate the Selecta folder on your computer.
+- 📁 Copy your music files (.mp3 only) into the `songs` directory within the repository folder. Note songs can be within subfolders.
 
 ### 3. Ensure Docker is Running
 
-1. 🐳 Open Docker Desktop and ensure it is running.
-2. ⚙️ Adjust the Docker settings to allocate more CPU and RAM (recommended: near the maximum available for fastest performance).
-3. 🔄 Restart Docker to apply the changes.
+- 🐳 Open Docker Desktop and ensure it is running.
+- ⚙️ Adjust the Docker settings to allocate more CPU and RAM 
+  - Select the gear icon and go to the resources tab
+  - Adjust the CPU limit, Memory limit and Swap (set to maximum for  fastest performance).
+- 🔄 Restart Docker to apply the changes.
 
 ### 4. Run the Application
 
-1. 🖥️ In the terminal, make sure you are in the Selecta folder.
-2. 🖥️ Run the following command to start the application:
+- 🖥️ In the terminal, make sure you are in the Selecta folder.
+- 🖥️ Run the following command to start the application:
    ```bash
    bash run.sh
    ```
-3. 🐳 Docker will run the necessary processing to understand which songs within your library are most similar.
+- 🐳 Docker will run the necessary processing to understand which songs within your library are most similar.
+
+> **Note**: The first time this runs it may take some time depending on the number of songs as well as the compute power allocated (i.e. the number of CPUs and amount of memory set in Docker). For reference, during testing, 1688 songs, 8 CPUs, 14GB RAM took ~12mins. 
 
 ### 5. Access the Streamlit App
 
-1. 🌐 Once the processing is finished, your terminal will prompt you to go to the following URL in your web browser (e.g. Chrome):
+- 🌐 Once the processing is finished, your terminal will prompt you to go to the following URL in your web browser (e.g. Chrome):
 
    ```
    http://localhost:8501
    ```
-3. 🎛️ You can now use the Streamlit app to explore and categorize your music library!
+- 🎛️ You can now use the Streamlit app to explore and categorize your music library!
 
 ## Troubleshooting
 
