@@ -9,7 +9,7 @@ from keras.callbacks import EarlyStopping
 from keras.regularizers import l2
 from keras.optimizers import Adam
 
-from classes.early_stopping import TimeBasedStopping
+from old.classes.early_stopping import TimeBasedStopping
 from config import (
     max_training_time_seconds,
     prediction_confidence_threshold,

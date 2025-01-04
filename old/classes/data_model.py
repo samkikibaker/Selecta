@@ -7,7 +7,7 @@ import numpy as np
 
 from sklearn.preprocessing import LabelBinarizer
 
-from classes.song import Song
+from old.classes.song import Song
 from config import num_roots, root_directory, num_processes, cache_path
 
 
