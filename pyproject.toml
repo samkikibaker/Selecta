@@ -1,0 +1,13 @@
+[project]
+name = "songcategoriser"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "librosa>=0.10.2.post1",
+    "pandas>=2.2.3",
+    "streamlit>=1.41.1",
+    "tensorflow-hub>=0.16.1",
+    "tqdm>=4.67.1",
+]
