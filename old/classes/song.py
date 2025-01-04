@@ -1,4 +1,3 @@
-import random
 import librosa
 import numpy as np
 
@@ -9,9 +8,8 @@ class Song:
     """Class to represent a song"""
 
     def __init__(
-            self,
-            path,
-
+        self,
+        path,
     ):
         self.path = path
         self.is_categorised = False
@@ -32,7 +30,6 @@ class Song:
         return song_name
 
     def extract_audio_features(self):
-
         try:
             # Load the audio file with librosa
             audio, sampling_rate = librosa.load(self.path, sr=None)

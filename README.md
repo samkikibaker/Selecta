@@ -39,7 +39,7 @@ To use Selecta, you will need **Git** 🛠️ and **Docker** 🐳 :
 ### 2. Add Your Music
 
 - 🎵 Locate the Selecta folder on your computer
-- 📁 Copy your music files (.mp3 only) into the `songs` directory within the repository folder. Note songs can be within subfolders
+- 📁 Copy your music files (.mp3 only) into the `songs` folder within the Selecta folder. Note that subfolders are allowed withing the `songs` folder
 
 ### 3. Ensure Docker is Running
 

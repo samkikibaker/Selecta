@@ -1,6 +1,6 @@
 import time
 
-from keras.callbacks import EarlyStopping, Callback
+from keras.callbacks import Callback
 
 from config import max_training_time_seconds
 
@@ -17,5 +17,6 @@ class TimeBasedStopping(Callback):
         if current_time - self.start_time > self.max_time_seconds:
             print(
                 f"\n Ending training early as the  maximum training time ({max_training_time_seconds} seconds)"
-                f" was reached")
+                f" was reached"
+            )
             self.model.stop_training = True
