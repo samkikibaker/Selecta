@@ -11,9 +11,9 @@ To use Selecta, you will need **Git** 🛠️ and **Docker** 🐳 :
 ### 1. Git
 - 🌐 Go [github.com](https://github.com/) and create an account
 - 🖥️ Go to [GitHub Personal Access Tokens page](https://github.com/settings/tokens)
-- ⚙️ Click Generate new token
+- ⚙️ Click Generate new token (classic)
 - 📝 Give your token a descriptive name (e.g., “Selecta repo access”).
-- 🔒 Choose the necessary permissions. For cloning repositories, you’ll need at least the repo scope
+- 🔒 Select repo to give yourself all the necessary permissions for cloning repositories
 - 📅 Set an expiration (or choose "No expiration" if you want it to last indefinitely)
 - 🔑 Click Generate token
 - ⚠️ Copy your token and store it in a safe place (you won't be able to see it again once you leave the page)
