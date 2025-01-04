@@ -54,11 +54,7 @@ if __name__ == "__main__":
     # Dynamic playlist input management
     for idx, playlist in enumerate(st.session_state["playlists"]):
         # Set the expander title dynamically
-        playlist_title = (
-            f"Playlist {idx + 1}"
-            if not playlist["playlist_name"]
-            else playlist["playlist_name"]
-        )
+        playlist_title = f"Playlist {idx + 1}" if not playlist["playlist_name"] else playlist["playlist_name"]
 
         with st.expander(playlist_title, expanded=True):
             # Text input for playlist name
@@ -91,9 +87,7 @@ if __name__ == "__main__":
             # Remove playlist button
             if st.button("Remove Playlist", key=f"remove_playlist_{idx}"):
                 del st.session_state["playlists"][idx]
-                st.session_state["playlists_generated"] = (
-                    False  # Reset playlists generated flag
-                )
+                st.session_state["playlists_generated"] = False  # Reset playlists generated flag
                 st.rerun()  # Force rerun to update the UI after removal
 
     # Process all playlists
@@ -113,9 +107,7 @@ if __name__ == "__main__":
             try:
                 # Get the similarity row corresponding to the selected song
                 similarity_row = song_categoriser.similarity_matrix.loc[song]
-                similarity_row = similarity_row.drop(
-                    song
-                )  # Exclude the selected song itself
+                similarity_row = similarity_row.drop(song)  # Exclude the selected song itself
                 most_similar_songs = similarity_row.nsmallest(num_songs).index.tolist()
                 playlist["songs"] = most_similar_songs
 
@@ -135,11 +127,7 @@ if __name__ == "__main__":
 
                 for similar_song in songs:
                     source_file = next(
-                        (
-                            song_obj.path
-                            for song_obj in song_categoriser.song_objects
-                            if song_obj.name == similar_song
-                        ),
+                        (song_obj.path for song_obj in song_categoriser.song_objects if song_obj.name == similar_song),
                         None,
                     )
                     if source_file and os.path.exists(source_file):

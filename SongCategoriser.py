@@ -11,10 +11,12 @@ from tqdm import tqdm
 
 from config import num_processes, yamnet_model
 
-multiprocessing.set_start_method('spawn', force=True)
+multiprocessing.set_start_method("spawn", force=True)
+
 
 class Song:
     """Class to represent a song"""
+
     def __init__(self, path):
         self.path = path
         self.name = self.get_song_name_from_path()
@@ -27,7 +29,6 @@ class Song:
         return song_name
 
     def extract_audio_features(self):
-
         try:
             # Load the audio file with librosa
             try:
@@ -65,11 +66,11 @@ class Song:
 
         # Reshape the array into (full_groups, group_size, m), and average across the group axis
         if leftover_rows > 0:
-            arr_full_groups = arr[:full_groups * group_size].reshape(full_groups, group_size, m)
+            arr_full_groups = arr[: full_groups * group_size].reshape(full_groups, group_size, m)
             collapsed_matrix = np.mean(arr_full_groups, axis=1)
 
             # Average the remaining rows if there are any leftover
-            leftover_matrix = np.mean(arr[full_groups * group_size:], axis=0, keepdims=True)
+            leftover_matrix = np.mean(arr[full_groups * group_size :], axis=0, keepdims=True)
             collapsed_matrix = np.vstack([collapsed_matrix, leftover_matrix])
         else:
             arr_full_groups = arr.reshape(full_groups, group_size, m)
@@ -77,9 +78,10 @@ class Song:
 
         return collapsed_matrix
 
+
 class SongCategoriser:
     def __init__(self):
-        self.song_paths = self.get_song_paths('songs/')
+        self.song_paths = self.get_song_paths("songs/")
         self.song_objects = self.load_or_create_song_objects()
         self.similarity_matrix = self.compute_similarity_matrix()
 
@@ -88,7 +90,7 @@ class SongCategoriser:
         """Get the paths to all songs and which category they fall into"""
         mp3_file_paths = []
         for dirpath, dirnames, filenames in os.walk(path):
-            for filename in fnmatch.filter(filenames, '*.mp3'):
+            for filename in fnmatch.filter(filenames, "*.mp3"):
                 mp3_path = os.path.abspath(os.path.join(dirpath, filename))
                 mp3_file_paths.append(mp3_path)
         print(f"MP3 paths: {mp3_file_paths}")
@@ -96,7 +98,7 @@ class SongCategoriser:
 
     def load_or_create_song_objects(self):
         try:
-            song_objects = joblib.load('cache/songs')
+            song_objects = joblib.load("cache/songs")
         except FileNotFoundError:
             song_objects = self.create_and_cache_song_objects()
         return song_objects
@@ -110,15 +112,20 @@ class SongCategoriser:
     def create_and_cache_song_objects(self):
         # Use tqdm_map to show progress
         with multiprocessing.pool.ThreadPool(processes=num_processes) as pool:
-            song_objects = list(tqdm(pool.imap(self.create_song_object, self.song_paths), total=len(self.song_paths)))
+            song_objects = list(
+                tqdm(
+                    pool.imap(self.create_song_object, self.song_paths),
+                    total=len(self.song_paths),
+                )
+            )
 
         pool.close()
         pool.join()
 
         # Save to cache
-        if os.path.exists('cache/songs'):
-            os.remove('cache/songs')
-        joblib.dump(song_objects, 'cache/songs')
+        if os.path.exists("cache/songs"):
+            os.remove("cache/songs")
+        joblib.dump(song_objects, "cache/songs")
 
         return song_objects
 
@@ -138,7 +145,7 @@ class SongCategoriser:
         song_indices = np.array(song_indices)  # Convert indices to numpy array
 
         # Compute all pairwise distances
-        distances = cdist(embeddings, embeddings, metric='cosine')
+        distances = cdist(embeddings, embeddings, metric="cosine")
 
         # Initialize similarity matrix
         similarity_matrix = pd.DataFrame(np.nan, index=song_names, columns=song_names)
@@ -148,9 +155,9 @@ class SongCategoriser:
 
         # Iterate over unique song pairs using combinations and tqdm for progress tracking
         for i, j in tqdm(
-                zip(upper_triangle_indices[0], upper_triangle_indices[1]),
-                total=len(upper_triangle_indices[0]),
-                desc="Computing similarity matrix"
+            zip(upper_triangle_indices[0], upper_triangle_indices[1]),
+            total=len(upper_triangle_indices[0]),
+            desc="Computing similarity matrix",
         ):
             mask1 = song_indices == i
             mask2 = song_indices == j
@@ -162,9 +169,10 @@ class SongCategoriser:
 
         return similarity_matrix
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     try:
-        song_categoriser = joblib.load('cache/song_categoriser')
+        song_categoriser = joblib.load("cache/song_categoriser")
     except FileNotFoundError:
         song_categoriser = SongCategoriser()
-        joblib.dump(song_categoriser, 'cache/song_categoriser')
+        joblib.dump(song_categoriser, "cache/song_categoriser")

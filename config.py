@@ -6,14 +6,14 @@ from tensorflow_hub import load
 # root_directory = '/Users/sambaker/Downloads/Music/Bandcamp/1. Home Listening'
 # root_directory = '/Users/sambaker/Downloads/Music/Bandcamp/2. Warm Up'
 # root_directory = '/Users/sambaker/Downloads/Music/Bandcamp/3. Middle'
-root_directory = '/Users/sambaker/Downloads/Music/Bandcamp/4. Peak'
+root_directory = "/Users/sambaker/Downloads/Music/Bandcamp/4. Peak"
 # root_directory = '/Users/sambaker/Downloads/Music/Bandcamp/5. End'
 # root_directory = '/Users/sambaker/Downloads/Music/DJ/IFL_Throwback'
 
 cache_path = f"cache/{root_directory.split('/')[-1]}"
 
 # yamnet_model_handle = 'https://www.kaggle.com/models/google/yamnet/TensorFlow2/yamnet/1'
-yamnet_model_path = 'yamnet-tensorflow2-yamnet-v1'
+yamnet_model_path = "yamnet-tensorflow2-yamnet-v1"
 yamnet_model = load(yamnet_model_path)
 
 # How many songs to send each round

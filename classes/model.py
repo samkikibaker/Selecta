@@ -10,7 +10,11 @@ from keras.regularizers import l2
 from keras.optimizers import Adam
 
 from classes.early_stopping import TimeBasedStopping
-from config import max_training_time_seconds, prediction_confidence_threshold, num_manual_per_round
+from config import (
+    max_training_time_seconds,
+    prediction_confidence_threshold,
+    num_manual_per_round,
+)
 
 
 class Model:
@@ -58,13 +62,15 @@ class Model:
         return train_test_data
 
     def configure_transfer_learning_model(self):
-        dense_layer_size = self.train_test_data['y_train'].shape[1]  # Number of categories
+        dense_layer_size = self.train_test_data["y_train"].shape[1]  # Number of categories
 
-        seq_model = Sequential([
-            Flatten(),
-            Dense(16, activation='relu', kernel_regularizer=l2(0.01)),
-            Dense(dense_layer_size, activation='softmax', kernel_regularizer=l2(0.01))
-        ])
+        seq_model = Sequential(
+            [
+                Flatten(),
+                Dense(16, activation="relu", kernel_regularizer=l2(0.01)),
+                Dense(dense_layer_size, activation="softmax", kernel_regularizer=l2(0.01)),
+            ]
+        )
 
         seq_model.summary()
         return seq_model
@@ -72,22 +78,23 @@ class Model:
     def fit_transfer_learning_model(self):
         optimizer = Adam(learning_rate=0.1)  # Set your desired learning rate here
 
-        self.transfer_learning_model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+        self.transfer_learning_model.compile(optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
 
         # Stop early if accuracy doesn't improve for 5 consecutive epochs
-        early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+        early_stopping = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
 
         # Stop if max_training_time_seconds time elapses
         time_based_stopping = TimeBasedStopping(max_training_time_seconds)
 
         callbacks = [early_stopping, time_based_stopping]
         fitted_model = self.transfer_learning_model.fit(
-            self.train_test_data['X_train'],
-            self.train_test_data['y_train'],
+            self.train_test_data["X_train"],
+            self.train_test_data["y_train"],
             batch_size=256,
             epochs=100,
             callbacks=callbacks,
-            validation_split=0.1)
+            validation_split=0.1,
+        )
 
         return fitted_model
 
@@ -111,7 +118,9 @@ class Model:
                 # Compute the prediction confidence metric
                 song.prediction_confidence_score = self.assess_prediction_confidence(avg_prediction)
 
-        self.median_prediction_confidence = np.median([song.prediction_confidence_score for song in self.data_model.song_objects if not song.is_categorised])
+        self.median_prediction_confidence = np.median(
+            [song.prediction_confidence_score for song in self.data_model.song_objects if not song.is_categorised]
+        )
         print(f"Median Prediction Confidence {self.median_prediction_confidence}")
 
     @staticmethod
@@ -149,40 +158,54 @@ class Model:
         uncategorised_songs = [song for song in self.data_model.song_objects if not song.is_categorised]
         results = []
         for threshold in confidence_thresholds:
-            songs_above_threshold = [song for song in uncategorised_songs if song.prediction_confidence_score >= threshold]
-            correctly_categorised_songs = [song for song in songs_above_threshold if song.predicted_category == song.category]
-            results.append({
-                "threshold": threshold,
-                "perc_songs_above_threshold": len(songs_above_threshold) / len(uncategorised_songs),
-                "accuracy": len(correctly_categorised_songs) / len(songs_above_threshold) if len(songs_above_threshold) > 0 else None,
-            })
+            songs_above_threshold = [
+                song for song in uncategorised_songs if song.prediction_confidence_score >= threshold
+            ]
+            correctly_categorised_songs = [
+                song for song in songs_above_threshold if song.predicted_category == song.category
+            ]
+            results.append(
+                {
+                    "threshold": threshold,
+                    "perc_songs_above_threshold": len(songs_above_threshold) / len(uncategorised_songs),
+                    "accuracy": len(correctly_categorised_songs) / len(songs_above_threshold)
+                    if len(songs_above_threshold) > 0
+                    else None,
+                }
+            )
         df = pd.DataFrame(results)
 
         import matplotlib.pyplot as plt
         import matplotlib
 
-        matplotlib.use('MacOSX')
+        matplotlib.use("MacOSX")
         plt.ion()
 
         # Plotting
         plt.figure(figsize=(10, 6))
-        plt.plot(df['threshold'], df['perc_songs_above_threshold'], label='perc_songs_above_threshold')
-        plt.plot(df['threshold'], df['accuracy'], label='accuracy')
+        plt.plot(
+            df["threshold"],
+            df["perc_songs_above_threshold"],
+            label="perc_songs_above_threshold",
+        )
+        plt.plot(df["threshold"], df["accuracy"], label="accuracy")
 
-        plt.xlabel('Confidence Threshold')
+        plt.xlabel("Confidence Threshold")
         plt.legend()  # Adding a legend
         plt.show()  # Displaying the plot
 
     def manually_categorise_unconfident_songs(self):
         uncategorised_songs = [song for song in self.data_model.song_objects if not song.is_categorised]
-        uncategorised_songs.sort(key=operator.attrgetter('prediction_confidence_score'))
+        uncategorised_songs.sort(key=operator.attrgetter("prediction_confidence_score"))
         end_index = min(num_manual_per_round, len(uncategorised_songs))
         for song in uncategorised_songs[0:end_index]:
             song.is_root = True
             song.is_categorised = True
 
         # Update counts of categorised/uncategorised songs
-        self.data_model.num_uncategorised_songs = len([song for song in self.data_model.song_objects if not song.is_categorised])
-        self.data_model.num_categorised_songs = len([song for song in self.data_model.song_objects if song.is_categorised])
-
-
+        self.data_model.num_uncategorised_songs = len(
+            [song for song in self.data_model.song_objects if not song.is_categorised]
+        )
+        self.data_model.num_categorised_songs = len(
+            [song for song in self.data_model.song_objects if song.is_categorised]
+        )

@@ -32,7 +32,7 @@ class DataModel:
         """Get the paths to all songs and which category they fall into"""
         mp3_file_paths = []
         for dirpath, dirnames, filenames in os.walk(path):
-            for filename in fnmatch.filter(filenames, '*.mp3'):
+            for filename in fnmatch.filter(filenames, "*.mp3"):
                 mp3_path = os.path.abspath(os.path.join(dirpath, filename))
                 mp3_file_paths.append(mp3_path)
         sorted_songs_dict = {}

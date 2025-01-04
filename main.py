@@ -1,7 +1,7 @@
 from classes.data_model import DataModel
 from classes.model import Model
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     data_model = DataModel()
     loop_counter = 0
     while data_model.num_uncategorised_songs > 0:  # and loop_counter < 5:
