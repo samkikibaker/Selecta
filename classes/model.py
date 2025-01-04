@@ -1,17 +1,13 @@
 import operator
-from math import floor
-import keras
 import numpy as np
 import math
 import pandas as pd
 
 from keras.models import Sequential
-from keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout, BatchNormalization, Activation, Input
+from keras.layers import Flatten, Dense
 from keras.callbacks import EarlyStopping
-from keras.regularizers import l1, l2
+from keras.regularizers import l2
 from keras.optimizers import Adam
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
 
 from classes.early_stopping import TimeBasedStopping
 from config import max_training_time_seconds, prediction_confidence_threshold, num_manual_per_round

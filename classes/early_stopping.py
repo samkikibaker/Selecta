@@ -1,6 +1,6 @@
 import time
 
-from keras.callbacks import EarlyStopping, Callback
+from keras.callbacks import Callback
 
 from config import max_training_time_seconds
 

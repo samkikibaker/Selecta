@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
             # Number input for similar songs
             st.session_state["playlists"][idx]["num_songs"] = st.number_input(
-                f"Number of songs in playlist",
+                "Number of songs in playlist",
                 min_value=1,
                 max_value=len(song_names) - 1,
                 value=st.session_state["playlists"][idx]["num_songs"],
@@ -74,7 +74,7 @@ if __name__ == "__main__":
                 st.markdown(song_list)
 
             # Remove playlist button
-            if st.button(f"Remove Playlist", key=f"remove_playlist_{idx}"):
+            if st.button("Remove Playlist", key=f"remove_playlist_{idx}"):
                 del st.session_state["playlists"][idx]
                 st.session_state["playlists_generated"] = False  # Reset playlists generated flag
                 st.rerun()  # Force rerun to update the UI after removal
