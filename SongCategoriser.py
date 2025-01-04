@@ -43,8 +43,8 @@ class Song:
                 max_abs_value = 1  # Avoid division by zero by setting max_abs_value to 1 where it is 0
             audio /= max_abs_value
 
+            # Run through yamnet model to extract embeddings
             _, embeddings, _ = yamnet_model(audio)
-
             yamnet_embeddings = np.array(embeddings)
 
             return yamnet_embeddings
