@@ -2,7 +2,7 @@ import multiprocessing
 
 from tensorflow_hub import load
 
-# Where to look for songs.joblib
+# Where to look for songs
 root_directory = "/Users/sambaker/Downloads/Music/Bandcamp/"
 
 cache_path = f"cache/{root_directory.split('/')[-1]}"
@@ -11,7 +11,7 @@ cache_path = f"cache/{root_directory.split('/')[-1]}"
 yamnet_model_path = "yamnet-tensorflow2-yamnet-v1"
 yamnet_model = load(yamnet_model_path)
 
-# How many songs.joblib to send each round
+# How many songs to send each round
 num_roots = 5
 
 # How many of the least confident predictions to send to the user each round

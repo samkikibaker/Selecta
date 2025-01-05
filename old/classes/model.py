@@ -202,7 +202,7 @@ class Model:
             song.is_root = True
             song.is_categorised = True
 
-        # Update counts of categorised/uncategorised songs.joblib
+        # Update counts of categorised/uncategorised songs
         self.data_model.num_uncategorised_songs = len(
             [song for song in self.data_model.song_objects if not song.is_categorised]
         )
