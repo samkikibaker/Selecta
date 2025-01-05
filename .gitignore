@@ -162,7 +162,7 @@ cython_debug/
 / .idea
 
 
-# Exclude contents of cache, songs and playlists but include empty dirs
+# Exclude contents of cache, songs.joblib and playlists but include empty dirs
 cache/*
 songs/*
 playlists/*
