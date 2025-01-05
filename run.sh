@@ -6,7 +6,7 @@ docker build -t song_categoriser .
 
 # Step 2: Open the Streamlit app in the browser automatically
 echo "Opening Streamlit app in the browser..."
-echn "Note this may be slow to load the first time..."
+echo "Note this may be slow to load the first time..."
 open http://localhost:8501
 
 # Step 3: Run the Docker container

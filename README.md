@@ -31,6 +31,8 @@ To use Selecta, you will need **Git** 🛠️ and **Docker** 🐳 :
    ```bash
    git clone https://github.com/samkikibaker/Selecta.git
    ```
+- Enter your Github username
+- For password, use the access token you created when setting up git rather than your Github password
 - 📂 Navigate into the repository folder:
    ```bash
    cd Selecta
