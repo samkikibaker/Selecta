@@ -22,8 +22,9 @@ COPY config.py .
 COPY pyproject.toml .
 COPY SongCategoriser.py .
 COPY yamnet-tensorflow2-yamnet-v1 yamnet-tensorflow2-yamnet-v1
+COPY logs logs
 
-# Create directories for cache and songs
+# Create directories for cache, songs and playlists
 RUN mkdir -p /app/cache /app/songs /app/playlists
 
 # Install dependencies from the pyproject.toml file
