@@ -12,7 +12,7 @@ from config import num_roots, root_directory, num_processes, cache_path
 
 
 class DataModel:
-    """Class to represent groups of songs"""
+    """Class to represent groups of songs.joblib"""
 
     def __init__(self):
         self.all_song_paths, self.sorted_songs = self.get_sorted_song_paths(root_directory)
@@ -29,7 +29,7 @@ class DataModel:
 
     @staticmethod
     def get_sorted_song_paths(path):
-        """Get the paths to all songs and which category they fall into"""
+        """Get the paths to all songs.joblib and which category they fall into"""
         mp3_file_paths = []
         for dirpath, dirnames, filenames in os.walk(path):
             for filename in fnmatch.filter(filenames, "*.mp3"):
@@ -69,7 +69,7 @@ class DataModel:
         return song_objects
 
     def provide_initial_examples(self):
-        """Select example songs in each category"""
+        """Select example songs.joblib in each category"""
         for category in self.categories:
             songs_in_category = [song for song in self.song_objects if song.category == category]
             if len(songs_in_category) <= num_roots:
