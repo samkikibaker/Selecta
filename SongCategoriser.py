@@ -147,6 +147,8 @@ class SongCategoriser:
         self.song_paths = self.get_song_paths("songs/")
         self.song_objects = self.load_or_create_song_objects()
         self.song_objects = self.remove_songs_with_errors()
+        assert len(self.song_objects) > 0, f"No songs found in songs folder"
+
         self.similarity_matrix = self.compute_similarity_matrix()
 
     @staticmethod
