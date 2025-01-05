@@ -21,7 +21,7 @@ if __name__ == "__main__":
     # If inside container, adjust the song object paths
     if in_container:
         for song in song_categoriser.song_objects:
-            relative_path = song.path.split("songs.joblib/")[-1]
+            relative_path = song.path.split("songs/")[-1]
             song.path = f"songs/{relative_path}"
 
     # Streamlit app title
@@ -34,7 +34,7 @@ if __name__ == "__main__":
                 "song": song_names[0],
                 "num_songs": 10,
                 "playlist_name": "Playlist 1",
-                "songs.joblib": [],
+                "songs": [],
             }
         ]
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
             "song": "",
             "num_songs": 10,
             "playlist_name": f"Playlist {len(st.session_state['playlists']) + 1}",
-            "songs.joblib": [],
+            "songs": [],
         }
         st.session_state["playlists"].append(new_playlist)
 
@@ -69,19 +69,19 @@ if __name__ == "__main__":
                 "Select a song to base the playlist on", song_names, key=f"song_{idx}"
             )
 
-            # Number input for similar songs.joblib
+            # Number input for similar songs
             st.session_state["playlists"][idx]["num_songs"] = st.number_input(
-                "Number of songs.joblib in playlist",
+                "Number of songs in playlist",
                 min_value=1,
                 max_value=len(song_names) - 1,
                 value=st.session_state["playlists"][idx]["num_songs"],
                 key=f"num_songs_{idx}",
             )
 
-            # Conditional display of generated songs.joblib
-            if playlist["songs.joblib"]:
+            # Conditional display of generated songs
+            if playlist["songs"]:
                 st.markdown("### Songs:")
-                song_list = "\n".join([f"- {song}" for song in playlist["songs.joblib"]])
+                song_list = "\n".join([f"- {song}" for song in playlist["songs"]])
                 st.markdown(song_list)
 
             # Remove playlist button
@@ -109,7 +109,7 @@ if __name__ == "__main__":
                 similarity_row = song_categoriser.similarity_matrix.loc[song]
                 similarity_row = similarity_row.drop(song)  # Exclude the selected song itself
                 most_similar_songs = similarity_row.nsmallest(num_songs).index.tolist()
-                playlist["songs.joblib"] = most_similar_songs
+                playlist["songs"] = most_similar_songs
 
             except Exception as e:
                 st.error(f"Error processing playlist '{playlist_name}': {e}")
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         with zipfile.ZipFile(zip_filename, "w") as zipf:
             for playlist in st.session_state["playlists"]:
                 playlist_name = playlist["playlist_name"]
-                songs = playlist["songs.joblib"]
+                songs = playlist["songs"]
 
                 for similar_song in songs:
                     source_file = next(
