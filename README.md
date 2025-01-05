@@ -1,6 +1,6 @@
 ## Selecta
 
-Selecta is a tool designed to help DJs and music enthusiasts easily categorize their music and create playlists. This version of the tool uses a Docker container to process your music files and provides an interactive interface through a Streamlit app.
+Selecta is a tool designed to help DJs and music enthusiasts easily categorize their music and create playlists. 
 
 > **Note**: You don’t need any coding knowledge to use this tool! While there are a couple of prerequisites to install, these tools are free, widely trusted, and commonly used by almost all software developers. Rest assured, future versions of Selecta aim to simplify the setup even further for a smoother experience.
 
