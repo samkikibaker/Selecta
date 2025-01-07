@@ -14,15 +14,16 @@ if __name__ == "__main__":
 
     song_names = sorted(list(song_categoriser.similarity_matrix.index))
 
-    # Check if running inside the container using the environment variable
+    # Check if running inside a container (environment variable)
     in_container = os.getenv("IN_CONTAINER", "false").lower() == "true"
     print(f"IN_CONTAINER: {in_container}")
 
     # If inside container, adjust the song object paths
     if in_container:
         for song in song_categoriser.song_objects:
-            relative_path = song.path.split("songs.joblib/")[-1]
-            song.path = f"songs/{relative_path}"
+            # Use os.path to split the path correctly across platforms
+            relative_path = song.path.split(os.path.join("songs.joblib", ""))[-1]
+            song.path = os.path.join("songs", relative_path)
 
     # Streamlit app title
     st.title("Selecta - Find Similar Songs")
