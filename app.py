@@ -22,7 +22,7 @@ if __name__ == "__main__":
     if in_container:
         for song in song_categoriser.song_objects:
             # Use os.path to split the path correctly across platforms
-            relative_path = song.path.split(os.path.join("songs.joblib", ""))[-1]
+            relative_path = os.path.relpath(song.path, "songs")
             song.path = os.path.join("songs", relative_path)
 
     # Streamlit app title
