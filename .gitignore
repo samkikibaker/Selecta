@@ -164,9 +164,9 @@ cython_debug/
 
 # Exclude contents of cache, songs and playlists but include empty dirs
 cache/*
-# songs/*
+songs/*
 playlists/*
 
 !cache/.gitkeep
-# !songs/.gitkeep
+!songs/.gitkeep
 !playlists/.gitkeep
