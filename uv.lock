@@ -1768,6 +1768,7 @@ dependencies = [
     { name = "pre-commit" },
     { name = "pyqt6" },
     { name = "ruff" },
+    { name = "stqdm" },
     { name = "streamlit" },
     { name = "tensorflow" },
     { name = "tensorflow-hub" },
@@ -1781,6 +1782,7 @@ requires-dist = [
     { name = "pre-commit", specifier = ">=4.0.1" },
     { name = "pyqt6", specifier = ">=6.8.0" },
     { name = "ruff", specifier = ">=0.8.6" },
+    { name = "stqdm", specifier = ">=0.0.5" },
     { name = "streamlit", specifier = ">=1.41.1" },
     { name = "tensorflow", specifier = ">=2.18.0" },
     { name = "tensorflow-hub", specifier = ">=0.16.1" },
@@ -1834,6 +1836,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a5/4a/6a11d62cfd6383c88f4918bdc5191d9c437f649c9101ceb5eec7e2837f0b/soxr-0.5.0.post1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:94de2812368e98cb42b4eaeddf8ee1657ecc19bd053f8e67b9b5aa12a3592012", size = 221450 },
     { url = "https://files.pythonhosted.org/packages/25/d1/83a66e795381ddfc5c3ebf34cc0ac68735c7c459ed1fe65a2193a52c57b1/soxr-0.5.0.post1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9c8e9c980637e03d3f345a4fd81d56477a58c294fb26205fa121bc4eb23d9d01", size = 253025 },
     { url = "https://files.pythonhosted.org/packages/cd/2e/1fbad5cc8c49c45a0b94221d16445792f55b63fe4f6d3885db960d92892c/soxr-0.5.0.post1-cp39-cp39-win_amd64.whl", hash = "sha256:7e71b0b0db450f36de70f1047505231db77a713f8c47df9342582ae8a4b828f2", size = 167292 },
+]
+
+[[package]]
+name = "stqdm"
+version = "0.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "streamlit" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6b/f4/770b463dd67fb3bd0204bd3d35423c838e58a5f78f97bf98730b9b1cb991/stqdm-0.0.5.tar.gz", hash = "sha256:1bed78e60068da3afc7c6d87a5388006036633aa2fe2e19fa7db46483ef1227e", size = 7406 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/08/e3/63cf2a221dc4c5894c2e42a7916ddcde8e5846f9551c2e9ed83024934fa3/stqdm-0.0.5-py3-none-any.whl", hash = "sha256:3177858c1ce5244821f13cc7cbd88a6dc8f154ef1bd12d2fa3342f2a9caf8843", size = 11123 },
 ]
 
 [[package]]

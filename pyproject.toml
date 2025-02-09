@@ -10,6 +10,7 @@ dependencies = [
     "pre-commit>=4.0.1",
     "pyqt6>=6.8.0",
     "ruff>=0.8.6",
+    "stqdm>=0.0.5",
     "streamlit>=1.41.1",
     "tensorflow>=2.18.0",
     "tensorflow-hub>=0.16.1",
