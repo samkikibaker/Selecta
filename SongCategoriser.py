@@ -5,9 +5,11 @@ import librosa
 import numpy as np
 import pandas as pd
 import multiprocessing
+import hashlib
 
 from scipy.spatial.distance import cdist
-from tqdm import tqdm
+from stqdm import stqdm
+from pathlib import Path
 
 from config import num_processes, yamnet_model
 from logs.logger import logger
@@ -55,12 +57,14 @@ class Song:
                 - audio (np.ndarray): The audio time series.
                 - sampling_rate (int): The sampling rate of the audio file.
         """
-        try:
-            # Load the audio file with librosa
-            audio, sampling_rate = librosa.load(path, sr=16000, mono=True, offset=30, duration=60)
-        except librosa.util.exceptions.ParameterError:
+
+        # Load the audio file with librosa
+        audio, sampling_rate = librosa.load(path, sr=16000, mono=True, offset=30, duration=120)
+
+        if len(audio) == 0:
             logger.info(f"Offset exceeds file length for {path}, loading from beginning instead.")
-            audio, sampling_rate = librosa.load(path, sr=16000, mono=True, offset=0, duration=60)
+            audio, sampling_rate = librosa.load(path, sr=16000, mono=True, offset=0, duration=120)
+
         return audio, sampling_rate
 
     @staticmethod
@@ -143,11 +147,22 @@ class Song:
 class SongCategoriser:
     """Class to process the songs and compute similarities"""
 
-    def __init__(self):
-        self.song_paths = self.get_song_paths("songs/")
+    def __init__(self, dir_path: str):
+        # Define cache file names
+        self.dir_path = dir_path
+        self.dir_path_hash = hashlib.md5(str(self.dir_path).encode()).hexdigest()
+        self.songs_cache_filename = f"songs-{self.dir_path_hash}"
+        self.similarity_matrix_cache_filename = f"similarity_matrix-{self.dir_path_hash}"
+
+        # Get song paths
+        self.song_paths = self.get_song_paths(path=self.dir_path)
+
+        # Load or create song objects
         self.song_objects = self.load_or_create_song_objects()
         self.song_objects = self.remove_songs_with_errors()
-        self.similarity_matrix = self.compute_similarity_matrix()
+
+        # Compute similarity matrix
+        self.similarity_matrix = self.load_or_compute_similarity_matrix()
 
     @staticmethod
     def get_song_paths(path: str = "songs/"):
@@ -164,11 +179,13 @@ class SongCategoriser:
         Returns:
             list: A list of absolute file paths to all `.mp3` files found in the directory.
         """
+
         mp3_file_paths = []
         for dirpath, dirnames, filenames in os.walk(path):
             for filename in fnmatch.filter(filenames, "*.mp3"):
                 mp3_path = os.path.abspath(os.path.join(dirpath, filename))
                 mp3_file_paths.append(mp3_path)
+
         return mp3_file_paths
 
     def load_or_create_song_objects(self):
@@ -183,7 +200,7 @@ class SongCategoriser:
             list: A list of song objects, either loaded from the cache or freshly created.
         """
         try:
-            song_objects = joblib.load("cache/songs.joblib")
+            song_objects = joblib.load(Path(f"cache/{self.songs_cache_filename}"))
         except FileNotFoundError:
             logger.info("No songs cache found, creating song objects...")
             song_objects = self.create_and_cache_song_objects()
@@ -221,7 +238,7 @@ class SongCategoriser:
         Steps:
             1. Processes all song paths in parallel to create `Song` objects.
             2. Removes any existing cache file to avoid duplication.
-            3. Saves the generated objects to a cache file ("cache/songs.joblib").
+            3. Saves the generated objects to a cache file.
 
         Returns:
             list: A list of `Song` objects created from the song paths.
@@ -229,10 +246,10 @@ class SongCategoriser:
         # Use tqdm to show progress
         with multiprocessing.pool.ThreadPool(processes=num_processes) as pool:
             song_objects = list(
-                tqdm(
+                stqdm(
                     pool.imap(self.create_song_object, self.song_paths),
                     total=len(self.song_paths),
-                    desc="Creating song objects...",
+                    desc="Processing Songs",
                 )
             )
 
@@ -240,9 +257,7 @@ class SongCategoriser:
         pool.join()
 
         # Save to cache
-        if os.path.exists("cache/songs.joblib"):
-            os.remove("cache/songs.joblib")
-        joblib.dump(song_objects, "cache/songs.joblib")
+        joblib.dump(song_objects, Path(f"cache/{self.songs_cache_filename}"))
         logger.info("Cached song objects")
 
         return song_objects
@@ -274,7 +289,7 @@ class SongCategoriser:
 
         return songs_without_errors
 
-    def compute_similarity_matrix(self):
+    def load_or_compute_similarity_matrix(self):
         """
         Computes a pairwise similarity matrix for all songs using their embeddings.
 
@@ -301,51 +316,52 @@ class SongCategoriser:
                           and average similarity scores as values. Cells contain NaN if a pair does
                           not have valid embeddings for comparison.
         """
-        # Get song names
-        song_names = [song.name for song in self.song_objects]
 
-        # Collect all embeddings and their song indices
-        embeddings = []
-        song_indices = []
-        for i, song in enumerate(self.song_objects):
-            if song.simplified_yamnet_embeddings is not None:
-                embeddings.append(song.simplified_yamnet_embeddings)
-                song_indices.extend([i] * song.simplified_yamnet_embeddings.shape[0])
+        # Load if cache exists
+        if os.path.exists(Path(f"cache/{self.similarity_matrix_cache_filename}")):
+            similarity_matrix = joblib.load(Path(f"cache/{self.similarity_matrix_cache_filename}"))
 
-        embeddings = np.vstack(embeddings)  # Stack all embeddings
-        song_indices = np.array(song_indices)  # Convert indices to numpy array
+        else:
+            # Get song names
+            song_names = [song.name for song in self.song_objects]
 
-        # Compute all pairwise distances between embeddings
-        logger.info("Computing pairwise distances between song embeddings...")
-        distances = cdist(embeddings, embeddings, metric="cosine")
+            # Collect all embeddings and their song indices
+            embeddings = []
+            song_indices = []
+            for i, song in enumerate(self.song_objects):
+                if song.simplified_yamnet_embeddings is not None:
+                    embeddings.append(song.simplified_yamnet_embeddings)
+                    song_indices.extend([i] * song.simplified_yamnet_embeddings.shape[0])
 
-        # Initialize an empty similarity matrix
-        similarity_matrix = pd.DataFrame(np.nan, index=song_names, columns=song_names)
+            embeddings = np.vstack(embeddings)  # Stack all embeddings
+            song_indices = np.array(song_indices)  # Convert indices to numpy array
 
-        # Use upper triangle index for efficient iteration
-        upper_triangle_indices = np.triu_indices(len(self.song_objects), k=1)
+            # Compute all pairwise distances between embeddings
+            logger.info("Computing pairwise distances between song embeddings...")
+            distances = cdist(embeddings, embeddings, metric="cosine")
 
-        # Iterate over unique song pairs using combinations and tqdm for progress tracking
-        for i, j in tqdm(
-            zip(upper_triangle_indices[0], upper_triangle_indices[1]),
-            total=len(upper_triangle_indices[0]),
-            desc="Computing similarity matrix",
-        ):
-            # Compute average distance
-            mask1 = song_indices == i
-            mask2 = song_indices == j
-            mean_distance = distances[mask1][:, mask2].mean()
+            # Initialize an empty similarity matrix
+            similarity_matrix = pd.DataFrame(np.nan, index=pd.Series(song_names), columns=pd.Series(song_names))
 
-            # Assign in similarity matrix
-            similarity_matrix.iloc[i, j] = mean_distance
-            similarity_matrix.iloc[j, i] = mean_distance
+            # Use upper triangle index for efficient iteration
+            upper_triangle_indices = np.triu_indices(len(self.song_objects), k=1)
+
+            # Iterate over unique song pairs using combinations and tqdm for progress tracking
+            for i, j in stqdm(
+                zip(upper_triangle_indices[0], upper_triangle_indices[1]),
+                total=len(upper_triangle_indices[0]),
+                desc="Assessing Similarity",
+            ):
+                # Compute average distance
+                mask1 = song_indices == i
+                mask2 = song_indices == j
+                mean_distance = distances[mask1][:, mask2].mean()
+
+                # Assign in similarity matrix
+                similarity_matrix.iloc[i, j] = mean_distance
+                similarity_matrix.iloc[j, i] = mean_distance
+
+            joblib.dump(similarity_matrix, Path(f"cache/{self.similarity_matrix_cache_filename}"))
+            logger.info("Cached similarity matrix")
 
         return similarity_matrix
-
-
-if __name__ == "__main__":
-    try:
-        song_categoriser = joblib.load("cache/song_categoriser.joblib")
-    except FileNotFoundError:
-        song_categoriser = SongCategoriser()
-        joblib.dump(song_categoriser, "cache/song_categoriser.joblib")

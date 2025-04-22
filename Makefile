@@ -5,3 +5,6 @@ docker_clean:
 ruff_fix:
 	uv tool run ruff check --fix
 	uv tool run ruff format
+
+streamlit:
+	streamlit run app.py
