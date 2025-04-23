@@ -1,18 +1,21 @@
 [project]
-name = "songcategoriser"
+name = "selecta"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "bcrypt>=4.3.0",
     "fastapi>=0.115.12",
     "librosa>=0.10.2.post1",
+    "motor>=3.7.0",
     "pandas>=2.2.3",
     "passlib>=1.7.4",
     "pathlib>=1.0.1",
     "pre-commit>=4.0.1",
-    "pymongo>=4.12.0",
+    "pydantic[email]>=2.11.3",
     "pyqt6>=6.8.0",
+    "python-dotenv>=1.1.0",
     "python-jose>=3.4.0",
     "python-multipart>=0.0.20",
     "ruff>=0.8.6",
@@ -27,3 +30,11 @@ dependencies = [
 [tool.ruff]
 show-fixes = true
 line-length = 120
+
+[tool.setuptools]
+packages = ["selecta"]
+package-dir = {"" = "src"}
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backnd = "setuptools.build_meta"
