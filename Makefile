@@ -8,3 +8,7 @@ ruff_fix:
 
 streamlit:
 	streamlit run app.py
+
+run_api:
+	cd backend && uvicorn api:app --reload --host 0.0.0.0 --port 8080
+
