@@ -7,6 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "bcrypt>=4.3.0",
     "fastapi>=0.115.12",
+    "httpx>=0.28.1",
     "librosa>=0.10.2.post1",
     "motor>=3.7.0",
     "pandas>=2.2.3",
