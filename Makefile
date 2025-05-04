@@ -7,7 +7,7 @@ ruff_fix:
 	uv tool run ruff format
 
 streamlit:
-	streamlit run app.py
+	streamlit run streamlit/streamlit_app.py
 
 run_api:
 	cd backend && uvicorn api:app --reload --host 0.0.0.0 --port 8080
