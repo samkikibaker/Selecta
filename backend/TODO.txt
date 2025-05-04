@@ -1,0 +1,5 @@
+
+
+Build Upload Songs Functionality
+    - Setup azure
+    - Decide whether to do upload endpoint or directly stream into blob storage

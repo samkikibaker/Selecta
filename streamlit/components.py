@@ -3,8 +3,17 @@ import httpx
 import os
 import asyncio
 
+from dotenv import load_dotenv
+from azure.storage.blob import BlobServiceClient
+from azure.identity import DefaultAzureCredential
+from stqdm import stqdm
+
+from streamlit import session_state
+
+load_dotenv()
+
 # Set the backend FastAPI URL
-API_URL = os.getenv("API_URL", "http://localhost:8080")
+API_URL = os.getenv("API_URL")
 
 # Async function for making HTTP requests
 async def register_user(email, password):
@@ -43,6 +52,7 @@ def login():
             response = asyncio.run(login_user(email, password))  # Using async request
             if response.status_code == 200:
                 st.session_state.access_token = response.json()["access_token"]
+                st.session_state.email = email
                 st.success("Login successful!")
                 st.session_state.logged_in = True
                 st.rerun()
@@ -59,7 +69,20 @@ def logout():
 
 def upload_music():
 
-    st.file_uploader(label="Upload Songs", type=".mp3", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Choose MP3 files", type=".mp3", accept_multiple_files=True)
+
+    if uploaded_files:
+        blob_service_client = BlobServiceClient(
+            account_url="https://saselecta.blob.core.windows.net",
+            credential=DefaultAzureCredential()
+        )
+        container_client = blob_service_client.get_container_client(container="containerselecta")
+        for uploaded_file in stqdm(uploaded_files, desc="Uploading Songs..."):
+            song_name = uploaded_file.name
+            blob_path = f"users/{session_state['email']}/songs/{song_name}"
+            container_client.upload_blob(name=blob_path, data=uploaded_file, overwrite=False)
+
+        # Queue Analysis Job
 
 
 def manage_playlists():
