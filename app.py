@@ -9,17 +9,11 @@ app_title = st.title("Selecta - Find Similar Songs")
 
 # Path to music
 music_path_input = st.text_input(
-    label="Enter music path",
-    key="music_path_input",
-    help="Enter the location path of your music"
+    label="Enter music path", key="music_path_input", help="Enter the location path of your music"
 )
 
 # Analyse Music Button
-analyse_music_button = st.button(
-    label="Analyse Music",
-    key="analyse_music_button",
-    disabled=music_path_input == ""
-)
+analyse_music_button = st.button(label="Analyse Music", key="analyse_music_button", disabled=music_path_input == "")
 if analyse_music_button:
     with st.spinner("Analysing Music..."):
         song_categoriser = SongCategoriser(dir_path=music_path_input)
@@ -28,7 +22,6 @@ if analyse_music_button:
     st.session_state["song_categoriser"] = song_categoriser
 
 if st.session_state.get("songs_analysed"):
-
     song_categoriser = st.session_state.get("song_categoriser")
     song_names = sorted(list(song_categoriser.similarity_matrix.index))
 
@@ -94,9 +87,9 @@ if st.session_state.get("songs_analysed"):
 
     # Process all playlists
     if st.button(
-            "Generate Playlists",
-            key="generate_playlists",
-            disabled=len(st.session_state["playlists"]) == 0,
+        "Generate Playlists",
+        key="generate_playlists",
+        disabled=len(st.session_state["playlists"]) == 0,
     ):
         # Enable download playlists button
         st.session_state["playlists_generated"] = True
