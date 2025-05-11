@@ -17,7 +17,13 @@ ENV PATH="/root/.local/bin/:$PATH"
 WORKDIR /app
 
 # Copy all files to the container
-COPY . /app
+COPY backend .
+COPY cache .
+COPY src .
+COPY yamnet-tensorflow2-yamnet-v1 .
+COPY .pre-commit-config.yaml .
+COPY .python-version .
+COPY app
 
 # Install dependencies from the pyproject.toml file
 RUN uv sync

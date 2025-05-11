@@ -8,12 +8,11 @@ import multiprocessing
 import hashlib
 
 from scipy.spatial.distance import cdist
-from stqdm import stqdm
 from tqdm import tqdm
 from pathlib import Path
 
 from config import num_processes, yamnet_model
-from logs.logger import logger
+from selecta.logger import logger
 
 multiprocessing.set_start_method("spawn", force=True)
 
