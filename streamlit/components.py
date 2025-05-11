@@ -29,6 +29,12 @@ async def login_user(email, password):
         return response
 
 
+async def queue_analysis_job(email):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"{API_URL}/queue_analysis_job", json={"email": email})
+        return response
+
+
 def register():
     email = st.text_input("Email", placeholder="Enter your email", key="register_email_input")
     password = st.text_input(
@@ -107,7 +113,11 @@ def upload_music():
 
 
 def analyse_music():
-    pass
+    if st.button("Analyse Music"):
+        response = asyncio.run(queue_analysis_job(st.session_state.email))
+
+        if response.status_code == 200:
+            st.success("Your music is being analysed. This may take a few minutes.")
 
 
 def manage_playlists():

@@ -9,6 +9,7 @@ import hashlib
 
 from scipy.spatial.distance import cdist
 from stqdm import stqdm
+from tqdm import tqdm
 from pathlib import Path
 
 from config import num_processes, yamnet_model
@@ -246,7 +247,7 @@ class SongCategoriser:
         # Use tqdm to show progress
         with multiprocessing.pool.ThreadPool(processes=num_processes) as pool:
             song_objects = list(
-                stqdm(
+                tqdm(
                     pool.imap(self.create_song_object, self.song_paths),
                     total=len(self.song_paths),
                     desc="Processing Songs",
@@ -347,7 +348,7 @@ class SongCategoriser:
             upper_triangle_indices = np.triu_indices(len(self.song_objects), k=1)
 
             # Iterate over unique song pairs using combinations and tqdm for progress tracking
-            for i, j in stqdm(
+            for i, j in tqdm(
                 zip(upper_triangle_indices[0], upper_triangle_indices[1]),
                 total=len(upper_triangle_indices[0]),
                 desc="Assessing Similarity",

@@ -16,14 +16,28 @@ ENV PATH="/root/.local/bin/:$PATH"
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy all files to the container
-COPY . /app
+# Copy only necessary files to the container
+COPY app.py .
+COPY config.py .
+COPY pyproject.toml .
+COPY src/selecta/SongCategoriser.py .
+COPY yamnet-tensorflow2-yamnet-v1 yamnet-tensorflow2-yamnet-v1
+COPY logs logs
+
+# Create directories for cache, songs and playlists
+RUN mkdir -p /app/cache /app/songs /app/playlists
 
 # Install dependencies from the pyproject.toml file
 RUN uv sync
 
+# Expose the Streamlit port
+EXPOSE 8501
+
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
+# Set environment variable in Dockerfile_Streamlit
+ENV IN_CONTAINER=true
+
 # Command to run the Streamlit app
-CMD ["main.py"]
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]

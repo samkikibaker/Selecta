@@ -2,7 +2,7 @@ import zipfile
 import streamlit as st
 import os
 
-from SongCategoriser import SongCategoriser
+from selecta.SongCategoriser import SongCategoriser
 
 # Streamlit app title
 app_title = st.title("Selecta - Find Similar Songs")

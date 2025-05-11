@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-router = APIRouter()
+auth_router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 JWT_SECRET = os.getenv("JWT_SECRET")
@@ -29,7 +29,7 @@ async def get_user_by_email(request: Request, email: str):
     return await users_collection.find_one({"email": email})
 
 
-@router.post("/register")
+@auth_router.post("/register")
 async def register(request: Request, user: UserCreate):
     existing_user = await get_user_by_email(request, user.email)
     if existing_user:
@@ -40,7 +40,7 @@ async def register(request: Request, user: UserCreate):
     return {"msg": "User registered successfully"}
 
 
-@router.post("/login")
+@auth_router.post("/login")
 async def login(request: Request, user: UserLogin):
     db_user = await get_user_by_email(request, user.email)
     if not db_user or not pwd_context.verify(user.password, db_user["password"]):
