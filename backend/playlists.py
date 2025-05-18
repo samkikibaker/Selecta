@@ -43,6 +43,7 @@ async def get_playlists(request: Request, email: GetPlaylistsRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to find playlists: {e}")
 
+
 @playlists_router.post("/modify_playlist")
 async def modify_playlist():
     pass

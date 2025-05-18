@@ -157,10 +157,7 @@ def upload_music():
                 # Upload the file if it doesn't already exist
                 if blob_path not in existing_blobs:
                     container_client.upload_blob(
-                        name=blob_path,
-                        data=uploaded_file,
-                        overwrite=False,
-                        max_concurrency=16
+                        name=blob_path, data=uploaded_file, overwrite=False, max_concurrency=16
                     )
 
 

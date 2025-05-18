@@ -20,7 +20,7 @@ WORKDIR /app
 COPY app.py .
 COPY pyproject.toml .
 COPY src/selecta/SongCategoriser.py .
-COPY yamnet-tensorflow2-yamnet-v1 yamnet-tensorflow2-yamnet-v1
+COPY src/selecta/yamnet-tensorflow2-yamnet-v1 yamnet-tensorflow2-yamnet-v1
 COPY logs logs
 
 # Create directories for cache, songs and playlists

@@ -20,5 +20,6 @@ class PlaylistCreateRequest(BaseModel):
     playlist_name: str
     songs: list[str]
 
+
 class GetPlaylistsRequest(BaseModel):
     email: EmailStr

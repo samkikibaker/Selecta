@@ -20,7 +20,7 @@ WORKDIR /app
 COPY backend backend
 COPY cache cache
 COPY src src
-COPY yamnet-tensorflow2-yamnet-v1 yamnet-tensorflow2-yamnet-v1
+COPY src/selecta/yamnet-tensorflow2-yamnet-v1 yamnet-tensorflow2-yamnet-v1
 COPY .pre-commit-config.yaml .
 COPY .python-version .
 COPY main.py .
