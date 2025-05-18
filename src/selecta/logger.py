@@ -1,5 +1,6 @@
 import logging
 
+
 def generate_logger():
     logging.basicConfig(
         level=logging.INFO,  # Set the minimum level of severity to capture

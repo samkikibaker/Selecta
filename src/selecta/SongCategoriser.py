@@ -17,13 +17,13 @@ multiprocessing.set_start_method("spawn", force=True)
 
 logger = generate_logger()
 
+
 class Song:
     """Class to represent a song"""
 
-    def __init__(self, path, model):
+    def __init__(self, path):
         self.path = path
         self.name = self.get_song_name_from_path(self.path)
-        self.yamet_model = model
         self.yamnet_embeddings = self.extract_audio_embeddings(self.path)
         self.simplified_yamnet_embeddings = self.collapse_matrix(self.yamnet_embeddings)
         del self.yamnet_embeddings  # Remove to reduce cache size
@@ -153,8 +153,8 @@ class SongCategoriser:
     def __init__(self, dir_path: str):
         # Define cache file names
         self.dir_path = dir_path
-        self.songs_cache_filename = "songs"
-        self.similarity_matrix_cache_filename = "similarity_matrix"
+        self.songs_cache_filename = "songs.joblib"
+        self.similarity_matrix_cache_filename = "similarity_matrix.joblib"
 
         # Get song paths
         self.song_paths = self.get_song_paths(path=self.dir_path)
