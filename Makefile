@@ -20,4 +20,9 @@ push:
 	az acr login --name $(subst .azurecr.io,,$(REGISTRY))
 	docker push $(REGISTRY)/$(IMAGE_NAME):$(TAG)
 
+run_local:
+	@echo "Building and running local $(IMAGE_NAME):$(TAG)"
+	docker build --platform linux/amd64 -t $(IMAGE_NAME):$(TAG) .
+	docker run --rm -it $(IMAGE_NAME):$(TAG)
+
 

@@ -41,4 +41,4 @@ package-dir = {"" = "src"}
 
 [build-system]
 requires = ["setuptools", "wheel"]
-build-backnd = "setuptools.build_meta"
+build-backend = "setuptools.build_meta"

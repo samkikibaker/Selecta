@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, HTTPException
 from azure.identity.aio import DefaultAzureCredential
 from azure.storage.queue.aio import QueueServiceClient
@@ -20,7 +22,7 @@ async def queue_analysis_job(job: QueueJobRequest):
         )
         queue_client = queue_service_client.get_queue_client(queue="q-selecta")
 
-        await queue_client.send_message({"email": job.email})
+        await queue_client.send_message(json.dumps({"email": job.email}))
         return {"message": "Email added to queue successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to queue job: {str(e)}")

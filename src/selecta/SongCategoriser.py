@@ -5,24 +5,25 @@ import librosa
 import numpy as np
 import pandas as pd
 import multiprocessing
-import hashlib
 
+from tensorflow_hub import load
 from scipy.spatial.distance import cdist
 from tqdm import tqdm
 from pathlib import Path
 
-from config import num_processes, yamnet_model
-from selecta.logger import logger
+from selecta.logger import generate_logger
 
 multiprocessing.set_start_method("spawn", force=True)
 
+logger = generate_logger()
 
 class Song:
     """Class to represent a song"""
 
-    def __init__(self, path):
+    def __init__(self, path, model):
         self.path = path
         self.name = self.get_song_name_from_path(self.path)
+        self.yamet_model = model
         self.yamnet_embeddings = self.extract_audio_embeddings(self.path)
         self.simplified_yamnet_embeddings = self.collapse_matrix(self.yamnet_embeddings)
         del self.yamnet_embeddings  # Remove to reduce cache size
@@ -93,6 +94,8 @@ class Song:
             audio /= max_abs_value
 
             # Run through YamNet model to extract embeddings
+            yamnet_model_path = "yamnet-tensorflow2-yamnet-v1"
+            yamnet_model = load(yamnet_model_path)
             _, embeddings, _ = yamnet_model(audio)
             yamnet_embeddings = np.array(embeddings)
 
@@ -150,9 +153,8 @@ class SongCategoriser:
     def __init__(self, dir_path: str):
         # Define cache file names
         self.dir_path = dir_path
-        self.dir_path_hash = hashlib.md5(str(self.dir_path).encode()).hexdigest()
-        self.songs_cache_filename = f"songs-{self.dir_path_hash}"
-        self.similarity_matrix_cache_filename = f"similarity_matrix-{self.dir_path_hash}"
+        self.songs_cache_filename = "songs"
+        self.similarity_matrix_cache_filename = "similarity_matrix"
 
         # Get song paths
         self.song_paths = self.get_song_paths(path=self.dir_path)
@@ -244,6 +246,7 @@ class SongCategoriser:
             list: A list of `Song` objects created from the song paths.
         """
         # Use tqdm to show progress
+        num_processes = multiprocessing.cpu_count()  # Number of available CPU cores
         with multiprocessing.pool.ThreadPool(processes=num_processes) as pool:
             song_objects = list(
                 tqdm(

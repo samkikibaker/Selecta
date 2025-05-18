@@ -18,7 +18,6 @@ WORKDIR /app
 
 # Copy only necessary files to the container
 COPY app.py .
-COPY config.py .
 COPY pyproject.toml .
 COPY src/selecta/SongCategoriser.py .
 COPY yamnet-tensorflow2-yamnet-v1 yamnet-tensorflow2-yamnet-v1

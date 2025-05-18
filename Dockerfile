@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 # The uv installer requires curl (and certificates) to download the release archive
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
@@ -17,13 +17,14 @@ ENV PATH="/root/.local/bin/:$PATH"
 WORKDIR /app
 
 # Copy all files to the container
-COPY backend .
-COPY cache .
-COPY src .
-COPY yamnet-tensorflow2-yamnet-v1 .
+COPY backend backend
+COPY cache cache
+COPY src src
+COPY yamnet-tensorflow2-yamnet-v1 yamnet-tensorflow2-yamnet-v1
 COPY .pre-commit-config.yaml .
 COPY .python-version .
-COPY app
+COPY main.py .
+COPY pyproject.toml .
 
 # Install dependencies from the pyproject.toml file
 RUN uv sync
@@ -32,4 +33,5 @@ RUN uv sync
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Command to run the Streamlit app
-CMD ["main.py"]
+CMD ["python", "main.py"]
+
