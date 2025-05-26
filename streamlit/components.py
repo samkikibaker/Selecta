@@ -8,15 +8,18 @@ import json
 import multiprocessing
 
 from dotenv import load_dotenv
+from datetime import datetime
 from azure.storage.blob import BlobServiceClient
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
 from stqdm import stqdm
 from streamlit import session_state
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from selecta.mongo_db import insert_documents
+from selecta.logger import generate_logger
 
+logger = generate_logger()
 load_dotenv()
 
 # Set the backend FastAPI URL
@@ -134,31 +137,48 @@ def upload_music():
     uploaded_files = st.file_uploader("Choose MP3 files", type=".mp3", accept_multiple_files=True)
 
     if uploaded_files:
-        if len(uploaded_files) > 1000:
-            st.error("Maximum 1000 songs can be uploaded.")
-        else:
-            # Initialize BlobServiceClient with default credentials
-            blob_service_client = BlobServiceClient(
-                account_url="https://saselecta.blob.core.windows.net", credential=DefaultAzureCredential()
-            )
-            container_client = blob_service_client.get_container_client(container="containerselecta")
+        # Initialize BlobServiceClient with default credentials
+        blob_service_client = BlobServiceClient(
+            account_url="https://saselecta.blob.core.windows.net", credential=DefaultAzureCredential()
+        )
+        container_client = blob_service_client.get_container_client(container="containerselecta")
 
-            # List existing blobs in the path users/{session_state['email']}/songs/
-            existing_blobs = set()
-            prefix = f"users/{session_state['email']}/songs/"
-            for blob in container_client.list_blobs(name_starts_with=prefix):
-                existing_blobs.add(blob.name)
+        # List existing songs in blob storage
+        existing_blobs = set()
+        prefix = f"users/{session_state['email']}/songs/"
+        for blob in container_client.list_blobs(name_starts_with=prefix):
+            existing_blobs.add(blob.name)
 
-            # Upload only files that don't already exist
-            for uploaded_file in stqdm(uploaded_files, desc="Uploading Songs..."):
-                song_name = uploaded_file.name
-                blob_path = f"{prefix}{song_name}"
+        new_files = [f for f in uploaded_files if f"{prefix}{f.name}" not in existing_blobs]
 
-                # Upload the file if it doesn't already exist
-                if blob_path not in existing_blobs:
-                    container_client.upload_blob(
-                        name=blob_path, data=uploaded_file, overwrite=False, max_concurrency=16
-                    )
+        # Upload only files that don't already exist
+        for new_file in stqdm(new_files, desc="Uploading Songs..."):
+            song_name = new_file.name
+            blob_path = f"{prefix}{song_name}"
+
+            # Upload the file if it doesn't already exist
+            if blob_path not in existing_blobs:
+                container_client.upload_blob(
+                    name=blob_path, data=new_file, overwrite=False, max_concurrency=8
+                )
+
+
+def upload_music_as_zip():
+    uploaded_file = st.file_uploader("Choose MP3 files", type=".zip", accept_multiple_files=False)
+
+    if uploaded_file:
+        # Initialize BlobServiceClient with default credentials
+        blob_service_client = BlobServiceClient(
+            account_url="https://saselecta.blob.core.windows.net", credential=DefaultAzureCredential()
+        )
+        container_client = blob_service_client.get_container_client(container="containerselecta")
+
+        current_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        blob_path = f"users/{session_state['email']}/songs/{current_time_str}"
+
+        container_client.upload_blob(
+            name=blob_path, data=uploaded_file, overwrite=False, max_concurrency=8
+        )
 
 
 def analyse_music():

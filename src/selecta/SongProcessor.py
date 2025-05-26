@@ -74,9 +74,10 @@ class SongProcessor:
                 prefix=song_blob_path,
                 local_dir_path=f"songs/",
             )
-            song = Song(path=f"songs/{song_blob_path.split('/')[-1]}")
+            song_name = song_blob_path.split("/")[-1]
+            song = Song(path=f"songs/{song_name}")
             new_songs.append(song)
-            os.remove(f"songs/{song.name}")
+            os.remove(f"songs/{song_name}")
 
         updated_songs_cache = self.songs_cache + new_songs
         return updated_songs_cache

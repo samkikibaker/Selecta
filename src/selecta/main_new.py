@@ -24,7 +24,7 @@ try:
     message = json.loads(message_obj.content)
     user_email = message.get("email")
 
-    song_processor = SongProcessor(user_email)
+    song_processor = SongProcessor(email=user_email)
 
     logger.info("Analysis Complete!")
 
