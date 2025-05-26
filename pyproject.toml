@@ -19,6 +19,7 @@ dependencies = [
     "pathlib>=1.0.1",
     "pre-commit>=4.0.1",
     "pydantic[email]>=2.11.3",
+    "pyqt5>=5.15.11",
     "python-dotenv>=1.1.0",
     "python-jose>=3.4.0",
     "python-multipart>=0.0.20",

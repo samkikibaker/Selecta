@@ -2,7 +2,7 @@ import librosa
 import numpy as np
 import multiprocessing
 
-from tensorflow_hub import load
+from pathlib import Path
 
 from selecta.logger import generate_logger
 
@@ -14,29 +14,18 @@ logger = generate_logger()
 class Song:
     """Class to represent a song"""
 
-    def __init__(self, path):
+    def __init__(self, path: Path, yamnet_model):
         self.path = path
-        self.name = self.get_song_name_from_path(self.path)
+        self.name = path.name
+        self.yamnet_model = yamnet_model
         self.yamnet_embeddings = self.extract_audio_embeddings(self.path)
         self.simplified_yamnet_embeddings = self.collapse_matrix(self.yamnet_embeddings)
         del self.yamnet_embeddings  # Remove to reduce cache size
+        del self.yamnet_model  # Not serializable
+
 
     @staticmethod
-    def get_song_name_from_path(path: str):
-        """
-        Extracts the song name from a given file path.
-
-        Args:
-            path (str): The file path of the song.
-
-        Returns:
-            str: The song name, extracted as the last component of the path.
-        """
-        song_name = path.split("/")[-1]
-        return song_name
-
-    @staticmethod
-    def extract_audio_features(path: str):
+    def extract_audio_features(path: Path):
         """
         Extracts audio features from a given file path using librosa.
 
@@ -61,8 +50,7 @@ class Song:
 
         return audio, sampling_rate
 
-    @staticmethod
-    def extract_audio_embeddings(path: str):
+    def extract_audio_embeddings(self, path: Path):
         """
         Extracts audio embeddings from a given file path using the YamNet model.
 
@@ -87,9 +75,7 @@ class Song:
             audio /= max_abs_value
 
             # Run through YamNet model to extract embeddings
-            yamnet_model_path = "yamnet-tensorflow2-yamnet-v1"
-            yamnet_model = load(yamnet_model_path)
-            _, embeddings, _ = yamnet_model(audio)
+            _, embeddings, _ = self.yamnet_model(audio)
             yamnet_embeddings = np.array(embeddings)
 
             return yamnet_embeddings

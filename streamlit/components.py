@@ -158,27 +158,7 @@ def upload_music():
 
             # Upload the file if it doesn't already exist
             if blob_path not in existing_blobs:
-                container_client.upload_blob(
-                    name=blob_path, data=new_file, overwrite=False, max_concurrency=8
-                )
-
-
-def upload_music_as_zip():
-    uploaded_file = st.file_uploader("Choose MP3 files", type=".zip", accept_multiple_files=False)
-
-    if uploaded_file:
-        # Initialize BlobServiceClient with default credentials
-        blob_service_client = BlobServiceClient(
-            account_url="https://saselecta.blob.core.windows.net", credential=DefaultAzureCredential()
-        )
-        container_client = blob_service_client.get_container_client(container="containerselecta")
-
-        current_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        blob_path = f"users/{session_state['email']}/songs/{current_time_str}"
-
-        container_client.upload_blob(
-            name=blob_path, data=uploaded_file, overwrite=False, max_concurrency=8
-        )
+                container_client.upload_blob(name=blob_path, data=new_file, overwrite=False, max_concurrency=8)
 
 
 def analyse_music():
