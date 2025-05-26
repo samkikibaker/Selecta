@@ -23,7 +23,6 @@ class Song:
         del self.yamnet_embeddings  # Remove to reduce cache size
         del self.yamnet_model  # Not serializable
 
-
     @staticmethod
     def extract_audio_features(path: Path):
         """

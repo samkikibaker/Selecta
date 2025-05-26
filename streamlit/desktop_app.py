@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QComboBox,
     QTableWidget,
-    QTableWidgetItem
+    QTableWidgetItem,
 )
 from PyQt5.QtCore import Qt, QRunnable, QThreadPool
 from pathlib import Path
@@ -38,22 +38,16 @@ from selecta.blob_storage import download_blobs, create_blob_container_client
 load_dotenv()
 API_URL = os.getenv("API_URL")
 
-class SongAnalysisWorker(QRunnable):
 
+class SongAnalysisWorker(QRunnable):
     def __init__(self, email, song_table):
         super().__init__()
         self.song_table = song_table
         self.email = email
 
     def run(self):
-        song_paths = [
-            Path(self.song_table.item(row, 1).text())
-            for row in range(self.song_table.rowCount())
-        ]
-        song_processor_desktop = SongProcessorDesktop(
-            email=self.email,
-            local_song_paths=song_paths
-        )
+        song_paths = [Path(self.song_table.item(row, 1).text()) for row in range(self.song_table.rowCount())]
+        song_processor_desktop = SongProcessorDesktop(email=self.email, local_song_paths=song_paths)
 
 
 class SelectaApp(QWidget):
