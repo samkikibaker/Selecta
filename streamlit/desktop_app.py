@@ -1,35 +1,17 @@
 import sys
 import asyncio
 import os
-import joblib
+import pickle
 import json
 import pandas as pd
 import httpx
 
 from dotenv import load_dotenv
-from PyQt5.QtWidgets import (
-    QApplication,
-    QWidget,
-    QVBoxLayout,
-    QPushButton,
-    QLineEdit,
-    QLabel,
-    QTabWidget,
-    QTextEdit,
-    QFileDialog,
-    QInputDialog,
-    QSpinBox,
-    QMessageBox,
-    QComboBox,
-    QTableWidget,
-    QTableWidgetItem,
+from PyQt5.QtWidgets import ( QApplication, QWidget, QVBoxLayout, QPushButton, QLineEdit, QLabel, QTabWidget,
+                              QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem,
 )
 from PyQt5.QtCore import Qt, QRunnable, QThreadPool
 from pathlib import Path
-
-from azure.storage.blob import BlobServiceClient
-from azure.identity import DefaultAzureCredential
-from azure.core.exceptions import ResourceNotFoundError
 
 from selecta.SongProcessorDesktop import SongProcessorDesktop
 from selecta.Song import Song
@@ -244,11 +226,12 @@ class SelectaApp(QWidget):
     def get_similarity_matrix(self):
         download_blobs(
             container_client=self.container_client,
-            prefix=f"users/{self.email}/cache/similarity_matrix.joblib",
+            prefix=f"users/{self.email}/cache/similarity_matrix.pickle",
             local_dir_path=f"cache/",
         )
         try:
-            similarity_matrix = joblib.load(f"cache/similarity_matrix.joblib")
+            with open(f"cache/similarity_matrix.pickle") as f:
+                similarity_matrix = pickle.load(f)
         except FileNotFoundError:
             similarity_matrix = pd.DataFrame()
         return similarity_matrix

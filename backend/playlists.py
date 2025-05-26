@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, HTTPException
 from typing import Dict, Any
 from dotenv import load_dotenv
 
-from backend.models import PlaylistCreateRequest, GetPlaylistsRequest
+from models import PlaylistCreateRequest, GetPlaylistsRequest
 from selecta.mongo_db import insert_documents, query_collection
 
 load_dotenv()
