@@ -230,7 +230,7 @@ class SelectaApp(QWidget):
             local_dir_path=f"cache/",
         )
         try:
-            with open(f"cache/similarity_matrix.pickle") as f:
+            with open(f"cache/similarity_matrix.pickle", "rb") as f:
                 similarity_matrix = pickle.load(f)
         except FileNotFoundError:
             similarity_matrix = pd.DataFrame()

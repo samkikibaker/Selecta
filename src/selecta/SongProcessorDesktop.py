@@ -41,7 +41,6 @@ class SongProcessorDesktop:
             local_dir_path=f"cache/",
         )
         try:
-            # similarity_matrix = pickle.load(f"cache/similarity_matrix.pickle")
             with open("cache/similarity_matrix.pickle", "rb") as f:
                 similarity_matrix = pickle.load(f)
         except FileNotFoundError:
@@ -55,7 +54,6 @@ class SongProcessorDesktop:
             local_dir_path=f"cache/",
         )
         try:
-            # songs = pickle.load(f"cache/songs.pickle")
             with open(f"cache/songs.pickle", "rb") as f:
                 songs = pickle.load(f)
         except FileNotFoundError:
@@ -81,7 +79,6 @@ class SongProcessorDesktop:
 
     def upload_songs_cache(self):
         local_path = "cache/songs.pickle"
-        # pickle.dump(self.songs_cache, local_path)
         with open(local_path, "wb") as f:
             pickle.dump(self.songs_cache, f)
         upload_blob(
@@ -135,7 +132,6 @@ class SongProcessorDesktop:
 
     def upload_similarity_matrix(self):
         local_path = "cache/similarity_matrix.pickle"
-        # pickle.dump(self.similarity_matrix, local_path)
         with open(local_path, "wb") as f:
             pickle.dump(self.similarity_matrix, f)
         upload_blob(
