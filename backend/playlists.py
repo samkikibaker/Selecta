@@ -26,7 +26,7 @@ async def create_playlist(request: Request, playlist: PlaylistCreateRequest):
 
 
 @playlists_router.post("/get_playlists")
-async def get_playlists(request: Request, email: GetPlaylistsRequest):
+async def read_playlists(request: Request, email: GetPlaylistsRequest):
     try:
         db = request.app.state.db
         collection_name = "Playlists"
@@ -45,7 +45,7 @@ async def get_playlists(request: Request, email: GetPlaylistsRequest):
 
 
 @playlists_router.post("/modify_playlist")
-async def modify_playlist():
+async def update_playlist():
     pass
 
 
