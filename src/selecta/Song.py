@@ -3,6 +3,7 @@ import numpy as np
 import multiprocessing
 
 from pathlib import Path
+from tensorflow_hub import load
 
 from selecta.logger import generate_logger
 
@@ -10,18 +11,22 @@ multiprocessing.set_start_method("spawn", force=True)
 
 logger = generate_logger()
 
+yamnet_model = None
+
+def init_yamnet():
+    global yamnet_model
+    yamnet_model_path = Path(__file__).parent / "yamnet-tensorflow2-yamnet-v1"
+    yamnet_model = load(str(yamnet_model_path))
 
 class Song:
     """Class to represent a song"""
 
-    def __init__(self, path: Path, yamnet_model):
+    def __init__(self, path: Path):
         self.path = path
         self.name = path.name
-        self.yamnet_model = yamnet_model
         self.yamnet_embeddings = self.extract_audio_embeddings(self.path)
         self.simplified_yamnet_embeddings = self.collapse_matrix(self.yamnet_embeddings)
         del self.yamnet_embeddings  # Remove to reduce cache size
-        del self.yamnet_model  # Not serializable
 
     @staticmethod
     def extract_audio_features(path: Path):
@@ -74,7 +79,8 @@ class Song:
             audio /= max_abs_value
 
             # Run through YamNet model to extract embeddings
-            _, embeddings, _ = self.yamnet_model(audio)
+            global yamnet_model
+            _, embeddings, _ = yamnet_model(audio)
             yamnet_embeddings = np.array(embeddings)
 
             return yamnet_embeddings

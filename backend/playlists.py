@@ -52,8 +52,3 @@ async def update_playlist():
 @playlists_router.post("/delete_playlist")
 async def delete_playlist():
     pass
-
-
-@playlists_router.post("/download_playlist")
-async def download_playlist():
-    pass

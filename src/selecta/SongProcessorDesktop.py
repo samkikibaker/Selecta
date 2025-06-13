@@ -12,19 +12,19 @@ from tensorflow_hub import load
 
 from selecta.logger import generate_logger
 from selecta.blob_storage import create_blob_container_client, download_blobs, upload_blob
-from selecta.Song import Song
+from selecta.Song import Song, init_yamnet
 
 multiprocessing.set_start_method("spawn", force=True)
 
 logger = generate_logger()
 
+def init_worker():
+    init_yamnet()
 
 class SongProcessorDesktop:
     def __init__(self, email: str, local_song_paths: list[Path]):
         self.email = email
         self.local_song_paths = local_song_paths
-        self.yamnet_model_path = Path(__file__).parent / "yamnet-tensorflow2-yamnet-v1"
-        self.yamnet_model = load(str(self.yamnet_model_path))
         self.container_client = create_blob_container_client(storage_account="saselecta", container="containerselecta")
         self.similarity_matrix = self.get_similarity_matrix()
         self.songs_cache = self.get_songs_cache()
@@ -56,6 +56,7 @@ class SongProcessorDesktop:
         try:
             with open(f"cache/songs.pickle", "rb") as f:
                 songs = pickle.load(f)
+            os.remove("cache/songs.pickle")
         except FileNotFoundError:
             songs = []
         return songs
@@ -68,11 +69,19 @@ class SongProcessorDesktop:
                 song_paths_to_process.append(local_path)
         return song_paths_to_process
 
+    @staticmethod
+    def process_song(song_path):
+        return Song(path=song_path)
+
     def update_songs_cache(self):
-        new_songs = []
-        for song_path in tqdm(self.song_paths_to_process):
-            song = Song(path=song_path, yamnet_model=self.yamnet_model)
-            new_songs.append(song)
+        with multiprocessing.Pool(initializer=init_worker) as pool:
+            # Use imap_unordered wrapped with tqdm for progress bar
+            new_songs = list(
+                tqdm(
+                    pool.imap_unordered(self.process_song, self.song_paths_to_process),
+                    total=len(self.song_paths_to_process),
+                )
+            )
 
         updated_songs_cache = self.songs_cache + new_songs
         return updated_songs_cache

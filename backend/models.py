@@ -11,10 +11,6 @@ class UserLogin(BaseModel):
     password: str
 
 
-class QueueJobRequest(BaseModel):
-    email: EmailStr
-
-
 class PlaylistCreateRequest(BaseModel):
     email: EmailStr
     playlist_name: str

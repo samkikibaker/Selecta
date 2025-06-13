@@ -1,15 +1,20 @@
-import sys
 import os
 
 import httpx
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QLabel,
-    QLineEdit, QPushButton, QWidget, QVBoxLayout, QMessageBox
+    QMainWindow,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QWidget,
+    QVBoxLayout,
+    QMessageBox,
 )
 from dotenv import load_dotenv
 
 from selecta.logger import generate_logger
+from MainWindow import MainWindow
 
 # Logger
 logger = generate_logger()
@@ -17,6 +22,7 @@ logger = generate_logger()
 # Env vars
 load_dotenv()
 API_URL = os.getenv("API_URL")
+
 
 class LoginWindow(QMainWindow):
     def __init__(self):
@@ -69,31 +75,9 @@ class LoginWindow(QMainWindow):
             response = client.post(f"{API_URL}/login", json={"email": email, "password": password})
             if response.status_code == 200:
                 access_token = response.json()["access_token"]
-                self.dashboard = DashboardWindow(access_token=access_token)
+                self.dashboard = MainWindow(email=email, access_token=access_token)
                 self.dashboard.show()
                 self.close()
             else:
                 error_message = response.json().get("detail", "Login failed.")
                 QMessageBox.warning(self, "Login Failed", error_message)
-
-
-class DashboardWindow(QMainWindow):
-    def __init__(self, access_token: str = None):
-        super().__init__()
-        self.setWindowTitle("Selecta")
-        self.access_token = access_token
-
-        # Simple layout and label
-        label = QLabel(f"Welcome to Selecta!")
-        layout = QVBoxLayout()
-        layout.addWidget(label)
-
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = LoginWindow()
-    window.show()
-    app.exec()
