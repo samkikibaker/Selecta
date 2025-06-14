@@ -13,10 +13,12 @@ logger = generate_logger()
 
 yamnet_model = None
 
+
 def init_yamnet():
     global yamnet_model
     yamnet_model_path = Path(__file__).parent / "yamnet-tensorflow2-yamnet-v1"
     yamnet_model = load(str(yamnet_model_path))
+
 
 class Song:
     """Class to represent a song"""

@@ -18,8 +18,10 @@ multiprocessing.set_start_method("spawn", force=True)
 
 logger = generate_logger()
 
+
 def init_worker():
     init_yamnet()
+
 
 class SongProcessorDesktop:
     def __init__(self, email: str, local_song_paths: list[Path]):

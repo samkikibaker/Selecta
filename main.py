@@ -12,7 +12,4 @@ for root, dirs, files in os.walk(documents_folder):
             mp3_files.append(Path(full_path))
 
 if __name__ == "__main__":
-    song_processor_desktop = SongProcessorDesktop(
-        email="samkikibaker@hotmail.co.uk",
-        local_song_paths=mp3_files
-)
+    song_processor_desktop = SongProcessorDesktop(email="samkikibaker@hotmail.co.uk", local_song_paths=mp3_files)
