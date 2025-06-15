@@ -1,7 +1,6 @@
 import os
-
 import pandas as pd
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThreadPool
 from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -11,12 +10,13 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QAbstractItemView,
     QPushButton,
-    QFileDialog, QMessageBox,
+    QFileDialog, QMessageBox, QProgressBar, QApplication,
 )
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from pathlib import Path
 from dotenv import load_dotenv
 
+from desktop_app.AnalysisWorker import AnalysisWorker
 from selecta.logger import generate_logger
 
 # Logger
@@ -25,7 +25,6 @@ logger = generate_logger()
 # Env vars
 load_dotenv()
 API_URL = os.getenv("API_URL")
-
 
 class AnalysePage(QMainWindow):
     def __init__(self, email: str = None, songs_df: pd.DataFrame = None, access_token: str = None):
@@ -51,6 +50,28 @@ class AnalysePage(QMainWindow):
         add_songs_button = QPushButton("Add Songs")
         add_songs_button.clicked.connect(self.select_folder)
         layout.addWidget(add_songs_button)
+
+        # Progress tracking
+        self.status_label = QLabel("Idle")
+        layout.addWidget(self.status_label)
+        self.analysis_progress_bar = QProgressBar()
+        self.analysis_progress_bar.setRange(0, 100)
+        self.analysis_progress_bar.setValue(0)
+        self.analysis_progress_bar.setVisible(True)
+        layout.addWidget(self.analysis_progress_bar)
+
+        self.similarity_progress_bar = QProgressBar()
+        self.similarity_progress_bar.setRange(0, 100)
+        self.similarity_progress_bar.setValue(0)
+        self.similarity_progress_bar.setVisible(True)
+        layout.addWidget(self.similarity_progress_bar)
+
+        # Add songs button
+        analyse_songs_button = QPushButton("Analyse Songs")
+        analyse_songs_button.clicked.connect(self.analyse_songs)
+        layout.addWidget(analyse_songs_button)
+
+        self.threadpool = QThreadPool()
 
         # Table view for songs
         self.table_view = QTableView()
@@ -98,3 +119,27 @@ class AnalysePage(QMainWindow):
             self.table_view.setModel(self.table_model)
 
             QMessageBox.information(self, "Added Songs", f"Added {len(self.new_songs_df)} songs not already analysed")
+
+    def analyse_songs(self):
+        worker = AnalysisWorker(new_songs_df=self.new_songs_df, email=self.email)
+
+        # Connect signals to slots (handler methods)
+        worker.signals.status.connect(self.update_status)
+        worker.signals.analysis_progress.connect(self.update_analysis_progress)
+        worker.signals.similarity_progress.connect(self.update_similarity_progress)
+
+        self.threadpool.start(worker)
+
+    def update_status(self, message: str):
+        self.status_label.setText(message)
+
+    def update_analysis_progress(self, value: int):
+        self.analysis_progress_bar.setValue(value)
+
+    def update_similarity_progress(self, value: int):
+        self.similarity_progress_bar.setValue(value)
+
+
+
+
+

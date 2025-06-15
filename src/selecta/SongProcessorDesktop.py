@@ -8,7 +8,6 @@ import multiprocessing
 from scipy.spatial.distance import cdist
 from tqdm import tqdm
 from pathlib import Path
-from tensorflow_hub import load
 
 from selecta.logger import generate_logger
 from selecta.blob_storage import create_blob_container_client, download_blobs, upload_blob
@@ -31,10 +30,10 @@ class SongProcessorDesktop:
         self.similarity_matrix = self.get_similarity_matrix()
         self.songs_cache = self.get_songs_cache()
         self.song_paths_to_process = self.compute_song_paths_to_process()
-        self.songs_cache = self.update_songs_cache()
-        self.upload_songs_cache()
-        self.similarity_matrix = self.compute_similarity_matrix()
-        self.upload_similarity_matrix()
+        self.analysis_progress_bar_max = len(self.song_paths_to_process)
+        self.similarity_progress_bar_max = self.compute_similarity_progress_bar_max_value()
+        self.analysis_progress_value = 0
+        self.similarity_progress_value = 0
 
     def get_similarity_matrix(self):
         download_blobs(
@@ -71,19 +70,26 @@ class SongProcessorDesktop:
                 song_paths_to_process.append(local_path)
         return song_paths_to_process
 
-    @staticmethod
-    def process_song(song_path):
+    def compute_similarity_progress_bar_max_value(self):
+        future_songs_cache_len = len(self.songs_cache) + len(self.song_paths_to_process)
+        upper_triangle_indices = np.triu_indices(future_songs_cache_len, k=1)
+        num_similarities_to_compute = len(upper_triangle_indices[0])
+        return num_similarities_to_compute
+
+    def process_song(self, song_path):
         return Song(path=song_path)
 
-    def update_songs_cache(self):
+    def update_songs_cache(self, signals):
+        new_songs = []
         with multiprocessing.Pool(initializer=init_worker) as pool:
-            # Use imap_unordered wrapped with tqdm for progress bar
-            new_songs = list(
-                tqdm(
+            for song in tqdm(
                     pool.imap_unordered(self.process_song, self.song_paths_to_process),
-                    total=len(self.song_paths_to_process),
-                )
-            )
+                    total=len(self.song_paths_to_process)
+            ):
+                new_songs.append(song)
+                self.analysis_progress_value += 1
+                analysis_progress_percentage = round(100 * self.analysis_progress_value / self.analysis_progress_bar_max)
+                signals.analysis_progress.emit(analysis_progress_percentage)
 
         updated_songs_cache = self.songs_cache + new_songs
         return updated_songs_cache
@@ -99,7 +105,7 @@ class SongProcessorDesktop:
         )
         os.remove(local_path)
 
-    def compute_similarity_matrix(self):
+    def compute_similarity_matrix(self, signals):
         # Get song names
         song_names = [song.name for song in self.songs_cache]
 
@@ -125,11 +131,10 @@ class SongProcessorDesktop:
         upper_triangle_indices = np.triu_indices(len(self.songs_cache), k=1)
 
         # Iterate over unique song pairs using combinations and tqdm for progress tracking
-        for i, j in tqdm(
-            zip(upper_triangle_indices[0], upper_triangle_indices[1]),
-            total=len(upper_triangle_indices[0]),
-            desc="Assessing Similarity",
-        ):
+        # for idx in tqdm(range(len(upper_triangle_indices[0])), desc="Assessing Similarity"):
+        for idx in tqdm(range(len(upper_triangle_indices[0]))):
+            i = upper_triangle_indices[0][idx]
+            j = upper_triangle_indices[1][idx]
             # Compute average distance
             mask1 = song_indices == i
             mask2 = song_indices == j
@@ -138,6 +143,10 @@ class SongProcessorDesktop:
             # Assign in similarity matrix
             similarity_matrix.iloc[i, j] = mean_distance
             similarity_matrix.iloc[j, i] = mean_distance
+
+            self.similarity_progress_value += 1
+            similarity_progress_percentage = round(100 * self.similarity_progress_value / self.similarity_progress_bar_max)
+            signals.similarity_progress.emit(similarity_progress_percentage)
 
         return similarity_matrix
 
@@ -151,3 +160,15 @@ class SongProcessorDesktop:
             blob_path=f"users/{self.email}/cache/similarity_matrix.pickle",
         )
         os.remove(local_path)
+
+    def run(self, signals = None):
+        if signals:
+            signals.status.emit("Analysing Songs...")
+        self.songs_cache = self.update_songs_cache(signals=signals)
+        self.upload_songs_cache()
+        if signals:
+            signals.status.emit("Computing Similarities...")
+        self.similarity_matrix = self.compute_similarity_matrix(signals=signals)
+        self.upload_similarity_matrix()
+        if signals:
+            signals.status.emit("Done")
