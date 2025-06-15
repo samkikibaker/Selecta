@@ -80,3 +80,21 @@ class MainWindow(QMainWindow):
         except FileNotFoundError:
             songs_df = pd.DataFrame(columns=["Name", "Location"])
         return songs_df
+
+    def get_similarity_matrix_cache(self):
+
+        download_blobs(
+            container_client=self.blob_container_client,
+            prefix=f"users/{self.email}/cache/similarity_matrix.pickle",
+            local_dir_path=f"../cache/",
+        )
+        try:
+            with open(f"../cache/similarity_matrix.pickle", "rb") as f:
+                songs = pickle.load(f)
+            os.remove("../cache/similarity_matrix.pickle")
+            songs_df = pd.DataFrame(
+                [{"name": song.name.lower(), "location": song.path} for song in songs]
+            )
+        except FileNotFoundError:
+            songs_df = pd.DataFrame(columns=["Name", "Location"])
+        return songs_df

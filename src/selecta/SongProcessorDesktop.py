@@ -49,15 +49,18 @@ class SongProcessorDesktop:
         return similarity_matrix
 
     def get_songs_cache(self):
+        local_path = Path("cache/songs.pickle")
+        if os.path.exists(local_path):
+            os.remove(local_path)
         download_blobs(
             container_client=self.container_client,
             prefix=f"users/{self.email}/cache/songs.pickle",
             local_dir_path=f"cache/",
         )
         try:
-            with open(f"cache/songs.pickle", "rb") as f:
+            with open(local_path, "rb") as f:
                 songs = pickle.load(f)
-            os.remove("cache/songs.pickle")
+            os.remove(local_path)
         except FileNotFoundError:
             songs = []
         return songs
