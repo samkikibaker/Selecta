@@ -1,4 +1,7 @@
 import os
+import shutil
+import tempfile
+from zipfile import ZipFile
 
 import httpx
 import pandas as pd
@@ -20,7 +23,7 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QAbstractItemView,
     QHBoxLayout,
-    QMessageBox, QLineEdit,
+    QMessageBox, QLineEdit, QFileDialog,
 )
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from dotenv import load_dotenv
@@ -36,11 +39,12 @@ API_URL = os.getenv("API_URL")
 
 
 class PlaylistWidget(QWidget):
-    def __init__(self, email, playlist_name, songs, refresh_callback=None):
+    def __init__(self, email, playlist_name, songs, songs_df, refresh_callback=None):
         super().__init__()
         self.email = email
         self.playlist_name = playlist_name
         self.songs = songs
+        self.songs_df = songs_df
         self.expanded = False
         self.refresh_callback = refresh_callback
 
@@ -88,8 +92,41 @@ class PlaylistWidget(QWidget):
         self.toggle_button.setText(("▼ " if self.expanded else "▶ ") + self.playlist_name)
 
     def download_playlist(self):
-        # Placeholder for downloading playlist
-        pass
+        try:
+            # Create a temporary directory to hold the files
+            with tempfile.TemporaryDirectory() as temp_dir:
+                song_paths = []
+
+                for song_name in self.songs:
+                    row = self.songs_df[self.songs_df["name"] == song_name]
+                    if not row.empty:
+                        song_path = row.iloc[0]["location"]
+                        if os.path.isfile(song_path):
+                            dest_path = os.path.join(temp_dir, os.path.basename(song_path))
+                            shutil.copy2(song_path, dest_path)
+                            song_paths.append(dest_path)
+
+                if not song_paths:
+                    QMessageBox.warning(self, "Download Failed", "No valid song files found for this playlist.")
+                    return
+
+                # Ask user where to save the zip
+                zip_file_path, _ = QFileDialog.getSaveFileName(
+                    self, "Save Playlist Zip", f"{self.playlist_name}.zip", "Zip Files (*.zip)"
+                )
+                if not zip_file_path:
+                    return
+
+                # Create the zip file
+                with ZipFile(zip_file_path, 'w') as zipf:
+                    for path in song_paths:
+                        zipf.write(path, os.path.basename(path))
+
+                QMessageBox.information(self, "Download Complete", f"Playlist zipped and saved to:\n{zip_file_path}")
+
+        except Exception as e:
+            logger.error(f"Error downloading playlist: {e}")
+            QMessageBox.critical(self, "Error", "An error occurred while creating the playlist zip file.")
 
     def delete_playlist(self, name):
         # Post to /login endpoint to get access token
@@ -233,6 +270,8 @@ class PlaylistsPage(QMainWindow):
                 email=self.email,
                 playlist_name=playlist["name"],
                 songs=playlist["songs"],
+                songs_df=self.songs_df,
                 refresh_callback=lambda: self.refresh(self.songs_df, self.similarity_matrix_df)
+
             )
             self.scroll_layout.addWidget(widget)
