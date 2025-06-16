@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (
 from dotenv import load_dotenv
 
 from selecta.logger import generate_logger
-from MainWindow import MainWindow
+from desktop_app.MainWindow import MainWindow
 
 # Logger
 logger = generate_logger()

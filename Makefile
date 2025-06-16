@@ -25,4 +25,8 @@ run_local:
 	docker build --platform linux/amd64 -t $(IMAGE_NAME):$(TAG) .
 	docker run --rm -it $(IMAGE_NAME):$(TAG)
 
+build_app:
+	uv run pyinstaller --noconfirm --onedir --windowed --debug all --noupx selecta.py
 
+run_app:
+	uv run ./dist/selecta/selecta
