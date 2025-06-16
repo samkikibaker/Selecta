@@ -35,6 +35,7 @@ class MainWindow(QMainWindow):
             storage_account="saselecta", container="containerselecta"
         )
         self.songs_df = self.get_songs_cache()
+        self.similarity_matrix_df = self.get_similarity_matrix_cache()
 
         # Create the central widget and layout
         central_widget = QWidget()
@@ -60,7 +61,23 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
+    def refresh_data(self):
+        self.songs_df = self.get_songs_cache()
+        self.similarity_matrix_df = self.get_similarity_matrix_cache()
+
+        # Refresh each page with new data
+        self.stack.widget(0).refresh(self.songs_df, self.similarity_matrix_df)
+        self.stack.widget(1).refresh(self.songs_df, self.similarity_matrix_df)
+        self.stack.widget(2).refresh(self.songs_df, self.similarity_matrix_df)
+
     def display_page(self, index):
+        self.songs_df = self.get_songs_cache()
+        self.similarity_matrix_df = self.get_similarity_matrix_cache()
+
+        page = self.stack.widget(index)
+        if hasattr(page, "refresh"):
+            page.refresh(self.songs_df, self.similarity_matrix_df)
+
         self.stack.setCurrentIndex(index)
         self.menu.setCurrentRow(index)
 
@@ -74,15 +91,12 @@ class MainWindow(QMainWindow):
             with open(f"../cache/songs.pickle", "rb") as f:
                 songs = pickle.load(f)
             os.remove("../cache/songs.pickle")
-            songs_df = pd.DataFrame(
-                [{"name": song.name.lower(), "location": song.path} for song in songs]
-            )
+            songs_df = pd.DataFrame([{"name": song.name, "location": song.path} for song in songs])
         except FileNotFoundError:
             songs_df = pd.DataFrame(columns=["Name", "Location"])
         return songs_df
 
     def get_similarity_matrix_cache(self):
-
         download_blobs(
             container_client=self.blob_container_client,
             prefix=f"users/{self.email}/cache/similarity_matrix.pickle",
@@ -90,11 +104,8 @@ class MainWindow(QMainWindow):
         )
         try:
             with open(f"../cache/similarity_matrix.pickle", "rb") as f:
-                songs = pickle.load(f)
+                similarity_matrix_df = pickle.load(f)
             os.remove("../cache/similarity_matrix.pickle")
-            songs_df = pd.DataFrame(
-                [{"name": song.name.lower(), "location": song.path} for song in songs]
-            )
         except FileNotFoundError:
-            songs_df = pd.DataFrame(columns=["Name", "Location"])
-        return songs_df
+            similarity_matrix_df = pd.DataFrame()
+        return similarity_matrix_df

@@ -35,9 +35,6 @@ class Song:
         """
         Extracts audio features from a given file path using librosa.
 
-        This method loads an audio file and returns the audio data and its sampling rate.
-        If the specified offset exceeds the file's length, it loads the audio from the beginning instead.
-
         Args:
             path (str): The file path of the audio file.
 
@@ -48,11 +45,7 @@ class Song:
         """
 
         # Load the audio file with librosa
-        audio, sampling_rate = librosa.load(path, sr=16000, mono=True, offset=30, duration=120)
-
-        if len(audio) == 0:
-            logger.info(f"Offset exceeds file length for {path}, loading from beginning instead.")
-            audio, sampling_rate = librosa.load(path, sr=16000, mono=True, offset=0, duration=120)
+        audio, sampling_rate = librosa.load(path, sr=16000, mono=True, offset=0, duration=120)
 
         return audio, sampling_rate
 

@@ -13,9 +13,14 @@ class UserLogin(BaseModel):
 
 class PlaylistCreateRequest(BaseModel):
     email: EmailStr
-    playlist_name: str
+    name: str
     songs: list[str]
 
 
-class GetPlaylistsRequest(BaseModel):
+class PlaylistDeleteRequest(BaseModel):
+    email: EmailStr
+    name: str
+
+
+class ReadPlaylistsRequest(BaseModel):
     email: EmailStr

@@ -74,3 +74,10 @@ class SongsPage(QMainWindow):
 
         return model
 
+    def refresh(self, songs_df, similarity_matrix_df):
+        self.songs_df = songs_df
+        self.similarity_matrix_df = similarity_matrix_df
+
+        # Rebuild and apply new table model
+        self.table_model = self.create_table_model(self.songs_df)
+        self.table_view.setModel(self.table_model)

@@ -4,13 +4,16 @@ from PyQt5.QtCore import Qt, QThreadPool
 from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
+    QVBoxLayout,
     QHBoxLayout,
     QLabel,
     QTableView,
     QHeaderView,
     QAbstractItemView,
     QPushButton,
-    QFileDialog, QMessageBox, QProgressBar, QApplication,
+    QFileDialog,
+    QMessageBox,
+    QProgressBar,
 )
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from pathlib import Path
@@ -26,6 +29,7 @@ logger = generate_logger()
 load_dotenv()
 API_URL = os.getenv("API_URL")
 
+
 class AnalysePage(QMainWindow):
     def __init__(self, email: str = None, songs_df: pd.DataFrame = None, access_token: str = None):
         super().__init__()
@@ -36,57 +40,63 @@ class AnalysePage(QMainWindow):
         self.added_songs_df = pd.DataFrame()
         self.new_songs_df = pd.DataFrame()
 
-        # Create the central widget and layout
+        # Central widget and layout
         central_widget = QWidget()
-        layout = QHBoxLayout()
+        main_layout = QHBoxLayout()  # left menu + right content
+        central_widget.setLayout(main_layout)
+        self.setCentralWidget(central_widget)
 
-        # Login title
+        # === Left panel (sidebar menu) ===
+        left_panel = QVBoxLayout()
+
+        # Title
         title = QLabel("Analyse")
         title.setAlignment(Qt.AlignLeft)
-        title.setStyleSheet("font-size: 30px; font-weight: bold;")
-        layout.addWidget(title)
+        title.setStyleSheet("font-size: 24px; font-weight: bold; margin-bottom: 16px;")
+        left_panel.addWidget(title)
 
-        # Add songs button
+        # Add Songs button
         add_songs_button = QPushButton("Add Songs")
         add_songs_button.clicked.connect(self.select_folder)
-        layout.addWidget(add_songs_button)
+        left_panel.addWidget(add_songs_button)
 
-        # Progress tracking
+        # Analyse Songs button
+        analyse_songs_button = QPushButton("Analyse Songs")
+        analyse_songs_button.clicked.connect(self.analyse_songs)
+        left_panel.addWidget(analyse_songs_button)
+
+        # Status Label
         self.status_label = QLabel("Idle")
-        layout.addWidget(self.status_label)
+        left_panel.addWidget(self.status_label)
+
+        # Progress Bars
         self.analysis_progress_bar = QProgressBar()
         self.analysis_progress_bar.setRange(0, 100)
         self.analysis_progress_bar.setValue(0)
-        self.analysis_progress_bar.setVisible(True)
-        layout.addWidget(self.analysis_progress_bar)
+        left_panel.addWidget(self.analysis_progress_bar)
 
         self.similarity_progress_bar = QProgressBar()
         self.similarity_progress_bar.setRange(0, 100)
         self.similarity_progress_bar.setValue(0)
-        self.similarity_progress_bar.setVisible(True)
-        layout.addWidget(self.similarity_progress_bar)
+        left_panel.addWidget(self.similarity_progress_bar)
 
-        # Add songs button
-        analyse_songs_button = QPushButton("Analyse Songs")
-        analyse_songs_button.clicked.connect(self.analyse_songs)
-        layout.addWidget(analyse_songs_button)
+        left_panel.addStretch()
 
-        self.threadpool = QThreadPool()
-
-        # Table view for songs
+        # === Right panel (song table) ===
         self.table_view = QTableView()
         self.table_model = self.create_table_model(self.new_songs_df)
         self.table_view.setModel(self.table_model)
-        layout.addWidget(self.table_view)
 
-        # UI tweaks for nicer table
         self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table_view.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table_view.setSortingEnabled(True)
 
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
+        # === Assemble layout ===
+        main_layout.addLayout(left_panel, stretch=1)
+        main_layout.addWidget(self.table_view, stretch=3)
+
+        self.threadpool = QThreadPool()
 
     def create_table_model(self, df: pd.DataFrame) -> QStandardItemModel:
         model = QStandardItemModel()
@@ -105,15 +115,11 @@ class AnalysePage(QMainWindow):
             added_songs = []
             audio_files = list(Path(folder_path).rglob("*.mp3"))
             for file_path in audio_files:
-                added_songs.append(
-                    {"name": file_path.name.lower(), "location": file_path}
-                )
+                added_songs.append({"name": file_path.name, "location": file_path})
             self.added_songs_df = pd.DataFrame(added_songs)
-            # Any row found in both will appear 3 times
-            # Any row found only in songs_df will appear twice
-            # Any row found only in added_songs_df with appear once
-            # So this filters to just the new songs
-            self.new_songs_df = pd.concat([self.added_songs_df, self.songs_df, self.songs_df]).drop_duplicates(keep=False)
+            self.new_songs_df = pd.concat([self.added_songs_df, self.songs_df, self.songs_df]).drop_duplicates(
+                keep=False
+            )
 
             self.table_model = self.create_table_model(self.new_songs_df)
             self.table_view.setModel(self.table_model)
@@ -121,9 +127,17 @@ class AnalysePage(QMainWindow):
             QMessageBox.information(self, "Added Songs", f"Added {len(self.new_songs_df)} songs not already analysed")
 
     def analyse_songs(self):
+        if self.new_songs_df.empty:
+            QMessageBox.warning(self, "No Songs", "Please add new songs before analysing.")
+            return
+
         worker = AnalysisWorker(new_songs_df=self.new_songs_df, email=self.email)
 
-        # Connect signals to slots (handler methods)
+        # Reset progress bars
+        self.analysis_progress_bar.setValue(0)
+        self.similarity_progress_bar.setValue(0)
+
+        # Connect signals to slots
         worker.signals.status.connect(self.update_status)
         worker.signals.analysis_progress.connect(self.update_analysis_progress)
         worker.signals.similarity_progress.connect(self.update_similarity_progress)
@@ -139,7 +153,11 @@ class AnalysePage(QMainWindow):
     def update_similarity_progress(self, value: int):
         self.similarity_progress_bar.setValue(value)
 
+    def refresh(self, songs_df, similarity_matrix_df):
+        self.songs_df = songs_df
+        self.similarity_matrix_df = similarity_matrix_df
 
+        self.new_songs_df = pd.concat([self.added_songs_df, self.songs_df, self.songs_df]).drop_duplicates(keep=False)
 
-
-
+        self.table_model = self.create_table_model(self.new_songs_df)
+        self.table_view.setModel(self.table_model)

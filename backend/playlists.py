@@ -2,8 +2,8 @@ from fastapi import APIRouter, Request, HTTPException
 from typing import Dict, Any
 from dotenv import load_dotenv
 
-from models import PlaylistCreateRequest, GetPlaylistsRequest
-from selecta.mongo_db import insert_documents, query_collection
+from models import PlaylistCreateRequest, ReadPlaylistsRequest, PlaylistDeleteRequest
+from selecta.mongo_db import insert_documents, query_collection, delete_documents
 
 load_dotenv()
 
@@ -25,8 +25,8 @@ async def create_playlist(request: Request, playlist: PlaylistCreateRequest):
         raise HTTPException(status_code=500, detail=f"Failed to create playlist: {e}")
 
 
-@playlists_router.post("/get_playlists")
-async def read_playlists(request: Request, email: GetPlaylistsRequest):
+@playlists_router.post("/read_playlists")
+async def read_playlists(request: Request, email: ReadPlaylistsRequest):
     try:
         db = request.app.state.db
         collection_name = "Playlists"
@@ -44,11 +44,21 @@ async def read_playlists(request: Request, email: GetPlaylistsRequest):
         raise HTTPException(status_code=500, detail=f"Failed to find playlists: {e}")
 
 
-@playlists_router.post("/modify_playlist")
+@playlists_router.post("/update_playlist")
 async def update_playlist():
     pass
 
 
 @playlists_router.post("/delete_playlist")
-async def delete_playlist():
-    pass
+async def delete_playlist(request: Request, data: PlaylistDeleteRequest):
+    try:
+        db = request.app.state.db
+        collection_name = "Playlists"
+        query = {"name": data.name, "email": data.email}
+
+        deleted_id = await delete_documents(db, collection_name, query)
+
+        return {"message": "Playlist deleted", "playlist_id": str(deleted_id)}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete playlist: {e}")

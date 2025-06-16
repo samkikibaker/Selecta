@@ -20,4 +20,3 @@ class AnalysisWorker(QRunnable):
             local_song_paths=new_song_paths,
         )
         song_processor.run(signals=self.signals)
-
