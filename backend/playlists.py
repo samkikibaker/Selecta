@@ -1,11 +1,8 @@
 from fastapi import APIRouter, Request, HTTPException
 from typing import Dict, Any
-from dotenv import load_dotenv
 
 from models import PlaylistCreateRequest, ReadPlaylistsRequest, PlaylistDeleteRequest
 from selecta.mongo_db import insert_documents, query_collection, delete_documents
-
-load_dotenv()
 
 playlists_router = APIRouter()
 

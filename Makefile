@@ -26,7 +26,7 @@ run_local:
 	docker run --rm -it $(IMAGE_NAME):$(TAG)
 
 build_app:
-	uv run pyinstaller --noconfirm --onedir --windowed --debug all --noupx selecta.py
+	uv run pyinstaller --noconfirm --onedir --windowed selecta.py
 
 run_app:
 	uv run ./dist/selecta/selecta

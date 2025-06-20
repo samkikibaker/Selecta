@@ -1,15 +1,13 @@
 import os
-import logging
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
 
-load_dotenv()
+from selecta.logger import generate_logger
+from selecta.utils import MONGO_URI, DB
 
-MONGO_URI = os.getenv("MONGO_URI")
-DB_NAME = os.getenv("DB")
+logger = generate_logger()
 
 
 @asynccontextmanager
@@ -17,11 +15,11 @@ async def lifespan(app: FastAPI):
     # Startup
     client = AsyncIOMotorClient(MONGO_URI)
     app.state.mongo_client = client
-    app.state.db = client[DB_NAME]
-    logging.info("✅ Connected to MongoDB")
+    app.state.db = client[DB]
+    logger.info("✅ Connected to MongoDB")
 
     yield
 
     # Shutdown
     client.close()
-    logging.info("🛑 MongoDB connection closed")
+    logger.info("🛑 MongoDB connection closed")

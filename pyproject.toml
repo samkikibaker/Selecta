@@ -15,7 +15,6 @@ dependencies = [
     "librosa>=0.10.2.post1",
     "motor>=3.7.0",
     "pandas>=2.2.3",
-    "passlib>=1.7.4",
     "pip>=25.1.1",
     "pre-commit>=4.0.1",
     "pydantic[email]>=2.11.3",

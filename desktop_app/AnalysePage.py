@@ -17,17 +17,12 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from pathlib import Path
-from dotenv import load_dotenv
 
 from desktop_app.AnalysisWorker import AnalysisWorker
 from selecta.logger import generate_logger
 
 # Logger
 logger = generate_logger()
-
-# Env vars
-load_dotenv()
-API_URL = os.getenv("API_URL")
 
 
 class AnalysePage(QMainWindow):

@@ -23,19 +23,17 @@ from PyQt5.QtWidgets import (
     QHeaderView,
     QAbstractItemView,
     QHBoxLayout,
-    QMessageBox, QLineEdit, QFileDialog,
+    QMessageBox,
+    QLineEdit,
+    QFileDialog,
 )
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from dotenv import load_dotenv
 
 from selecta.logger import generate_logger
+from selecta.utils import API_URL
 
 # Logger
 logger = generate_logger()
-
-# Env vars
-load_dotenv()
-API_URL = os.getenv("API_URL")
 
 
 class PlaylistWidget(QWidget):
@@ -118,7 +116,7 @@ class PlaylistWidget(QWidget):
                     return
 
                 # Create the zip file
-                with ZipFile(zip_file_path, 'w') as zipf:
+                with ZipFile(zip_file_path, "w") as zipf:
                     for path in song_paths:
                         zipf.write(path, os.path.basename(path))
 
@@ -248,7 +246,9 @@ class PlaylistsPage(QMainWindow):
     def save_playlist(self, name, songs):
         # Post to /login endpoint to get access token
         with httpx.Client() as client:
-            response = client.post(f"{API_URL}/create_playlist", json={"email": self.email, "name": name, "songs": songs})
+            response = client.post(
+                f"{API_URL}/create_playlist", json={"email": self.email, "name": name, "songs": songs}
+            )
             if response.status_code == 200:
                 # Update playlists widget
                 self.get_playlists()
@@ -271,7 +271,6 @@ class PlaylistsPage(QMainWindow):
                 playlist_name=playlist["name"],
                 songs=playlist["songs"],
                 songs_df=self.songs_df,
-                refresh_callback=lambda: self.refresh(self.songs_df, self.similarity_matrix_df)
-
+                refresh_callback=lambda: self.refresh(self.songs_df, self.similarity_matrix_df),
             )
             self.scroll_layout.addWidget(widget)

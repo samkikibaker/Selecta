@@ -1,4 +1,6 @@
 import os
+import sys
+
 import joblib
 import pickle
 import numpy as np
@@ -13,13 +15,15 @@ from selecta.logger import generate_logger
 from selecta.blob_storage import create_blob_container_client, download_blobs, upload_blob
 from selecta.Song import Song, init_yamnet
 
-multiprocessing.set_start_method("spawn", force=True)
-
 logger = generate_logger()
 
 
 def init_worker():
     init_yamnet()
+
+
+def process_song(song_path):
+    return Song(path=song_path)
 
 
 class SongProcessorDesktop:
@@ -36,13 +40,13 @@ class SongProcessorDesktop:
         self.similarity_progress_value = 0
 
     def get_similarity_matrix(self):
-        local_path = Path("cache/similarity_matrix.pickle")
+        local_path = os.path.expanduser("~/cache/similarity_matrix.pickle")
         if os.path.exists(local_path):
             os.remove(local_path)
         download_blobs(
             container_client=self.container_client,
             prefix=f"users/{self.email}/cache/similarity_matrix.pickle",
-            local_dir_path=f"cache/",
+            local_dir_path=os.path.expanduser("~/cache"),
         )
         try:
             with open(local_path, "rb") as f:
@@ -52,13 +56,13 @@ class SongProcessorDesktop:
         return similarity_matrix
 
     def get_songs_cache(self):
-        local_path = Path("cache/songs.pickle")
+        local_path = os.path.expanduser("~/cache/songs.pickle")
         if os.path.exists(local_path):
             os.remove(local_path)
         download_blobs(
             container_client=self.container_client,
             prefix=f"users/{self.email}/cache/songs.pickle",
-            local_dir_path=f"cache/",
+            local_dir_path=os.path.expanduser("~/cache"),
         )
         try:
             with open(local_path, "rb") as f:
@@ -82,14 +86,11 @@ class SongProcessorDesktop:
         num_similarities_to_compute = len(upper_triangle_indices[0])
         return num_similarities_to_compute
 
-    def process_song(self, song_path):
-        return Song(path=song_path)
-
     def update_songs_cache(self, signals):
         new_songs = []
         with multiprocessing.Pool(initializer=init_worker, processes=multiprocessing.cpu_count()) as pool:
             for song in tqdm(
-                pool.imap_unordered(self.process_song, self.song_paths_to_process),
+                pool.imap_unordered(process_song, self.song_paths_to_process),
                 total=len(self.song_paths_to_process),
             ):
                 new_songs.append(song)
@@ -103,7 +104,7 @@ class SongProcessorDesktop:
         return updated_songs_cache
 
     def upload_songs_cache(self):
-        local_path = "cache/songs.pickle"
+        local_path = os.path.expanduser("~/cache/songs.pickle")
         with open(local_path, "wb") as f:
             pickle.dump(self.songs_cache, f)
         upload_blob(
@@ -214,7 +215,7 @@ class SongProcessorDesktop:
         return similarity_matrix
 
     def upload_similarity_matrix(self):
-        local_path = "cache/similarity_matrix.pickle"
+        local_path = os.path.expanduser("~/cache/similarity_matrix.pickle")
         with open(local_path, "wb") as f:
             pickle.dump(self.similarity_matrix, f)
         upload_blob(
@@ -225,6 +226,9 @@ class SongProcessorDesktop:
         os.remove(local_path)
 
     def run(self, signals=None):
+        if getattr(sys, "frozen", False):
+            multiprocessing.freeze_support()
+
         if signals:
             signals.status.emit("Analysing Songs...")
         self.songs_cache = self.update_songs_cache(signals=signals)

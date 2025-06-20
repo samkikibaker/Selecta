@@ -11,17 +11,13 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QMessageBox,
 )
-from dotenv import load_dotenv
 
 from selecta.logger import generate_logger
 from desktop_app.MainWindow import MainWindow
+from selecta.utils import API_URL
 
 # Logger
 logger = generate_logger()
-
-# Env vars
-load_dotenv()
-API_URL = os.getenv("API_URL")
 
 
 class LoginWindow(QMainWindow):

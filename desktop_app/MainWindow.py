@@ -8,8 +8,8 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QListWidget,
     QStackedWidget,
+    QMessageBox,
 )
-from dotenv import load_dotenv
 
 from desktop_app.PlaylistsPage import PlaylistsPage
 from desktop_app.SongsPage import SongsPage
@@ -19,10 +19,6 @@ from selecta.logger import generate_logger
 
 # Logger
 logger = generate_logger()
-
-# Env vars
-load_dotenv()
-API_URL = os.getenv("API_URL")
 
 
 class MainWindow(QMainWindow):
@@ -82,30 +78,34 @@ class MainWindow(QMainWindow):
         self.menu.setCurrentRow(index)
 
     def get_songs_cache(self):
+        local_dir = os.path.expanduser("~/cache")
         download_blobs(
             container_client=self.blob_container_client,
             prefix=f"users/{self.email}/cache/songs.pickle",
-            local_dir_path=f"../cache/",
+            local_dir_path=local_dir,
         )
+        songs_pickle_path = os.path.join(local_dir, "songs.pickle")
         try:
-            with open(f"../cache/songs.pickle", "rb") as f:
+            with open(songs_pickle_path, "rb") as f:
                 songs = pickle.load(f)
-            os.remove("../cache/songs.pickle")
+            os.remove(songs_pickle_path)
             songs_df = pd.DataFrame([{"name": song.name, "location": song.path} for song in songs])
         except FileNotFoundError:
             songs_df = pd.DataFrame(columns=["Name", "Location"])
         return songs_df
 
     def get_similarity_matrix_cache(self):
+        local_dir = os.path.expanduser("~/cache")
         download_blobs(
             container_client=self.blob_container_client,
             prefix=f"users/{self.email}/cache/similarity_matrix.pickle",
-            local_dir_path=f"../cache/",
+            local_dir_path=local_dir,
         )
+        similarity_pickle_path = os.path.join(local_dir, "similarity_matrix.pickle")
         try:
-            with open(f"../cache/similarity_matrix.pickle", "rb") as f:
+            with open(similarity_pickle_path, "rb") as f:
                 similarity_matrix_df = pickle.load(f)
-            os.remove("../cache/similarity_matrix.pickle")
+            os.remove(similarity_pickle_path)
         except FileNotFoundError:
             similarity_matrix_df = pd.DataFrame()
         return similarity_matrix_df

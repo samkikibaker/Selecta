@@ -6,8 +6,7 @@ from pathlib import Path
 from tensorflow_hub import load
 
 from selecta.logger import generate_logger
-
-multiprocessing.set_start_method("spawn", force=True)
+from selecta.utils import resource_path
 
 logger = generate_logger()
 
@@ -16,7 +15,8 @@ yamnet_model = None
 
 def init_yamnet():
     global yamnet_model
-    yamnet_model_path = Path(__file__).parent / "yamnet-tensorflow2-yamnet-v1"
+    yamnet_model_path = resource_path("yamnet-tensorflow2-yamnet-v1")
+    logger.info(f"YAMNet model path: {yamnet_model_path}")
     yamnet_model = load(str(yamnet_model_path))
 
 

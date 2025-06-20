@@ -1,6 +1,9 @@
-import logging
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase, AsyncIOMotorCollection
 from typing import Union, List, Optional, Dict, Any
+
+from selecta.logger import generate_logger
+
+logger = generate_logger()
 
 
 async def connect_to_db(uri: str, db_name: str) -> Optional[AsyncIOMotorDatabase]:
@@ -8,10 +11,10 @@ async def connect_to_db(uri: str, db_name: str) -> Optional[AsyncIOMotorDatabase
     try:
         client = AsyncIOMotorClient(uri)
         db: AsyncIOMotorDatabase = client[db_name]
-        logging.info(f"Connected to MongoDB!")
+        logger.info(f"Connected to MongoDB!")
         return db
     except Exception as e:
-        logging.error("Failed to connect to MongoDB:", exc_info=e)
+        logger.error("Failed to connect to MongoDB:", exc_info=e)
         return None
 
 
@@ -20,10 +23,10 @@ async def query_collection(
 ) -> List[Dict[str, Any]]:
     """Query a collection with an optional filter and projection asynchronously."""
     collection: AsyncIOMotorCollection = db[collection_name]
-    logging.info(f"Querying collection: {collection_name}...")
+    logger.info(f"Querying collection: {collection_name}...")
     cursor = collection.find(query, projection)
     results = await cursor.to_list(length=None)
-    logging.info(f"Found {len(results)} results")
+    logger.info(f"Found {len(results)} results")
     return results
 
 
@@ -34,14 +37,14 @@ async def insert_documents(
     collection: AsyncIOMotorCollection = db[collection_name]
     if isinstance(documents, dict):
         result = await collection.insert_one(documents)
-        logging.info(f"Inserted 1 document into collection: {collection_name}")
+        logger.info(f"Inserted 1 document into collection: {collection_name}")
         return result.inserted_id
     elif isinstance(documents, list):
         result = await collection.insert_many(documents)
-        logging.info(f"Inserted {len(result.inserted_ids)} documents into collection: {collection_name}")
+        logger.info(f"Inserted {len(result.inserted_ids)} documents into collection: {collection_name}")
         return result.inserted_ids
     else:
-        logging.error("Documents should be a dict or list of dicts")
+        logger.error("Documents should be a dict or list of dicts")
         raise TypeError("Documents should be a dict or list of dicts")
 
 
@@ -58,7 +61,7 @@ async def update_documents(
         result = await collection.update_many(query, update)
     else:
         result = await collection.update_one(query, update)
-    logging.info(f"Updated {result.modified_count} document(s) in collection: {collection_name}")
+    logger.info(f"Updated {result.modified_count} document(s) in collection: {collection_name}")
     return result.modified_count
 
 
@@ -71,5 +74,5 @@ async def delete_documents(
         result = await collection.delete_many(query)
     else:
         result = await collection.delete_one(query)
-    logging.info(f"Deleted {result.deleted_count} document(s) in collection: {collection_name}")
+    logger.info(f"Deleted {result.deleted_count} document(s) in collection: {collection_name}")
     return result.deleted_count

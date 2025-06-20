@@ -16,18 +16,11 @@ from PyQt5.QtWidgets import (
     QFileDialog,
 )
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from pathlib import Path
-from dotenv import load_dotenv
 
-from selecta.blob_storage import create_blob_container_client, download_blobs
 from selecta.logger import generate_logger
 
 # Logger
 logger = generate_logger()
-
-# Env vars
-load_dotenv()
-API_URL = os.getenv("API_URL")
 
 
 class SongsPage(QMainWindow):
