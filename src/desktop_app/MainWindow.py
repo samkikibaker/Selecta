@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
         self.menu.setCurrentRow(index)
 
     def get_songs_cache(self):
-        local_path = Path("~/Library/Application Support/Selecta/cache/songs.pickle")
+        local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "songs.pickle"
         try:
             with open(local_path, "rb") as f:
                 songs = pickle.load(f)
@@ -84,7 +84,7 @@ class MainWindow(QMainWindow):
         return songs_df
 
     def get_similarity_matrix_cache(self):
-        local_path = Path("~/Library/Application Support/Selecta/cache/similarity_matrix.pickle")
+        local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "similarity_matrix.pickle"
         try:
             with open(local_path, "rb") as f:
                 similarity_matrix_df = pickle.load(f)

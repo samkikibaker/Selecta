@@ -27,7 +27,14 @@ run_local:
 	docker run --rm -it $(IMAGE_NAME):$(TAG)
 
 build_app:
-	uv run pyinstaller --noconfirm --onedir --windowed selecta.py
+	# First run this
+	# uv run pyinstaller --noconfirm --onedir --windowed selecta.py
+	# Then manually enter the datas in the .spec
+	# datas=[("src/selecta/yamnet-tensorflow2-yamnet-v1", "yamnet-tensorflow2-yamnet-v1")]
+	# Then run this each time after that
+	uv run pyinstaller selecta.spec
 
-run_app:
-	uv run ./dist/selecta/selecta
+
+build_disk_image:
+	make build_app
+	./build_disk_image.sh

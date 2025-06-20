@@ -37,7 +37,7 @@ class SongProcessorDesktop:
         self.similarity_progress_value = 0
 
     def get_similarity_matrix(self):
-        local_path = Path("~/Library/Application Support/Selecta/cache/similarity_matrix.pickle")
+        local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "similarity_matrix.pickle"
         try:
             with open(local_path, "rb") as f:
                 similarity_matrix = pickle.load(f)
@@ -46,7 +46,7 @@ class SongProcessorDesktop:
         return similarity_matrix
 
     def get_songs_cache(self):
-        local_path = Path("~/Library/Application Support/Selecta/cache/songs.pickle")
+        local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "songs.pickle"
         try:
             with open(local_path, "rb") as f:
                 songs = pickle.load(f)
@@ -86,7 +86,7 @@ class SongProcessorDesktop:
         return updated_songs_cache
 
     def upload_songs_cache(self):
-        local_path = Path("~/Library/Application Support/Selecta/cache/songs.pickle")
+        local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "songs.pickle"
         local_path.parent.mkdir(parents=True, exist_ok=True)
         with open(local_path, "wb") as f:
             pickle.dump(self.songs_cache, f)
@@ -145,7 +145,8 @@ class SongProcessorDesktop:
         return similarity_matrix
 
     def upload_similarity_matrix(self):
-        local_path = Path("~/Library/Application Support/Selecta/cache/similarity_matrix.pickle")
+        local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "similarity_matrix.pickle"
+
         local_path.parent.mkdir(parents=True, exist_ok=True)
         with open(local_path, "wb") as f:
             pickle.dump(self.similarity_matrix, f)
