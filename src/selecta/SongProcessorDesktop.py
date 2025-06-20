@@ -11,7 +11,6 @@ from tqdm import tqdm
 from pathlib import Path
 
 from selecta.logger import generate_logger
-from selecta.blob_storage import create_blob_container_client, download_blobs, upload_blob
 from selecta.Song import Song, init_yamnet
 
 logger = generate_logger()
@@ -29,7 +28,6 @@ class SongProcessorDesktop:
     def __init__(self, email: str, local_song_paths: list[Path]):
         self.email = email
         self.local_song_paths = local_song_paths
-        self.container_client = create_blob_container_client(storage_account="saselecta", container="containerselecta")
         self.similarity_matrix = self.get_similarity_matrix()
         self.songs_cache = self.get_songs_cache()
         self.song_paths_to_process = self.compute_song_paths_to_process()
@@ -39,14 +37,7 @@ class SongProcessorDesktop:
         self.similarity_progress_value = 0
 
     def get_similarity_matrix(self):
-        local_path = os.path.expanduser("~/cache/similarity_matrix.pickle")
-        if os.path.exists(local_path):
-            os.remove(local_path)
-        download_blobs(
-            container_client=self.container_client,
-            prefix=f"users/{self.email}/cache/similarity_matrix.pickle",
-            local_dir_path=os.path.expanduser("~/cache"),
-        )
+        local_path = Path("~/Library/Application Support/Selecta/cache/similarity_matrix.pickle")
         try:
             with open(local_path, "rb") as f:
                 similarity_matrix = pickle.load(f)
@@ -55,18 +46,10 @@ class SongProcessorDesktop:
         return similarity_matrix
 
     def get_songs_cache(self):
-        local_path = os.path.expanduser("~/cache/songs.pickle")
-        if os.path.exists(local_path):
-            os.remove(local_path)
-        download_blobs(
-            container_client=self.container_client,
-            prefix=f"users/{self.email}/cache/songs.pickle",
-            local_dir_path=os.path.expanduser("~/cache"),
-        )
+        local_path = Path("~/Library/Application Support/Selecta/cache/songs.pickle")
         try:
             with open(local_path, "rb") as f:
                 songs = pickle.load(f)
-            os.remove(local_path)
         except FileNotFoundError:
             songs = []
         return songs
@@ -103,62 +86,10 @@ class SongProcessorDesktop:
         return updated_songs_cache
 
     def upload_songs_cache(self):
-        local_path = os.path.expanduser("~/cache/songs.pickle")
+        local_path = Path("~/Library/Application Support/Selecta/cache/songs.pickle")
+        local_path.parent.mkdir(parents=True, exist_ok=True)
         with open(local_path, "wb") as f:
             pickle.dump(self.songs_cache, f)
-        upload_blob(
-            container_client=self.container_client,
-            local_file_path=local_path,
-            blob_path=f"users/{self.email}/cache/songs.pickle",
-        )
-        os.remove(local_path)
-
-    def compute_similarity_matrix_old(self, signals):
-        # Get song names
-        song_names = [song.name for song in self.songs_cache]
-
-        # Collect all embeddings and their song indices
-        embeddings = []
-        song_indices = []
-        for i, song in enumerate(self.songs_cache):
-            if song.simplified_yamnet_embeddings is not None:
-                embeddings.append(song.simplified_yamnet_embeddings)
-                song_indices.extend([i] * song.simplified_yamnet_embeddings.shape[0])
-
-        embeddings = np.vstack(embeddings)  # Stack all embeddings
-        song_indices = np.array(song_indices)  # Convert indices to numpy array
-
-        # Compute all pairwise distances between embeddings
-        logger.info("Computing pairwise distances between song embeddings...")
-        distances = cdist(embeddings, embeddings, metric="cosine")
-
-        # Initialize an empty similarity matrix
-        similarity_matrix = pd.DataFrame(np.nan, index=pd.Series(song_names), columns=pd.Series(song_names))
-
-        # Use upper triangle index for efficient iteration
-        upper_triangle_indices = np.triu_indices(len(self.songs_cache), k=1)
-
-        # Iterate over unique song pairs using combinations and tqdm for progress tracking
-        # for idx in tqdm(range(len(upper_triangle_indices[0])), desc="Assessing Similarity"):
-        for idx in tqdm(range(len(upper_triangle_indices[0]))):
-            i = upper_triangle_indices[0][idx]
-            j = upper_triangle_indices[1][idx]
-            # Compute average distance
-            mask1 = song_indices == i
-            mask2 = song_indices == j
-            median_distance = np.median(distances[mask1][:, mask2])
-
-            # Assign in similarity matrix
-            similarity_matrix.iloc[i, j] = median_distance
-            similarity_matrix.iloc[j, i] = median_distance
-
-            self.similarity_progress_value += 1
-            similarity_progress_percentage = round(
-                100 * self.similarity_progress_value / self.similarity_progress_bar_max
-            )
-            signals.similarity_progress.emit(similarity_progress_percentage)
-
-        return similarity_matrix
 
     def compute_similarity_matrix(self, signals):
         song_names = [song.name for song in self.songs_cache]
@@ -214,15 +145,10 @@ class SongProcessorDesktop:
         return similarity_matrix
 
     def upload_similarity_matrix(self):
-        local_path = os.path.expanduser("~/cache/similarity_matrix.pickle")
+        local_path = Path("~/Library/Application Support/Selecta/cache/similarity_matrix.pickle")
+        local_path.parent.mkdir(parents=True, exist_ok=True)
         with open(local_path, "wb") as f:
             pickle.dump(self.similarity_matrix, f)
-        upload_blob(
-            container_client=self.container_client,
-            local_file_path=local_path,
-            blob_path=f"users/{self.email}/cache/similarity_matrix.pickle",
-        )
-        os.remove(local_path)
 
     def run(self, signals=None):
         if getattr(sys, "frozen", False):

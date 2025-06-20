@@ -1,10 +1,11 @@
 import os
 import logging
 
+from pathlib import Path
 
 def generate_logger(debug_mode=False):
-    # Define a log directory in the user's home folder
-    log_dir = os.path.join(os.path.expanduser("~"), "selecta_logs")
+    # Define a log directory for the app logs
+    log_dir = Path("~/Library/Logs/Selecta/")
     os.makedirs(log_dir, exist_ok=True)
 
     # Define the log file path
