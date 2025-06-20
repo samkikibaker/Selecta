@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QListWidget,
     QStackedWidget,
-    QMessageBox,
 )
 
 from desktop_app.PlaylistsPage import PlaylistsPage

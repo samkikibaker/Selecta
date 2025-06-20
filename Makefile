@@ -3,6 +3,7 @@ docker_clean:
 	docker system prune -af
 
 ruff:
+	uv run ruff check . --fix
 	uv run ruff format
 
 streamlit:

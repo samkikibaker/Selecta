@@ -1,5 +1,5 @@
 import pandas as pd
-from PyQt5.QtCore import QObject, pyqtSignal, QRunnable, pyqtSlot
+from PyQt5.QtCore import QRunnable, pyqtSlot
 
 from desktop_app.AnalysisWorkerSignals import AnalysisWorkerSignals
 from selecta.SongProcessorDesktop import SongProcessorDesktop

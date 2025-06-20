@@ -1,7 +1,3 @@
-import os
-import pickle
-
-import httpx
 import pandas as pd
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
@@ -12,8 +8,6 @@ from PyQt5.QtWidgets import (
     QTableView,
     QHeaderView,
     QAbstractItemView,
-    QPushButton,
-    QFileDialog,
 )
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 

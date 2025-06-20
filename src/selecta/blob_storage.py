@@ -1,10 +1,7 @@
 import os
-from datetime import datetime
 
 from tqdm import tqdm
-from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
-from pathlib import Path
 
 from selecta.logger import generate_logger
 

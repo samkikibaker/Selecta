@@ -4,7 +4,6 @@ import tempfile
 from zipfile import ZipFile
 
 import httpx
-import pandas as pd
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -18,7 +17,6 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QSpinBox,
     QScrollArea,
-    QFrame,
     QTableView,
     QHeaderView,
     QAbstractItemView,

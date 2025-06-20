@@ -1,5 +1,3 @@
-import os
-
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
