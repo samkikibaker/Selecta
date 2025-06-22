@@ -3,9 +3,10 @@ import logging
 
 from pathlib import Path
 
+
 def generate_logger(debug_mode=False):
     # Define a log directory for the app logs
-    log_dir = Path("~/Library/Logs/Selecta/")
+    log_dir = Path.home() / "Library" / "Logs" / "Selecta"
     os.makedirs(log_dir, exist_ok=True)
 
     # Define the log file path

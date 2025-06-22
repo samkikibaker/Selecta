@@ -10,7 +10,7 @@ streamlit:
 	streamlit run streamlit/streamlit_app.py
 
 run_api:
-	cd backend && uvicorn api:app --reload --host 0.0.0.0 --port 8080
+	cd src && cd backend && uvicorn api:app --reload --host 0.0.0.0 --port 8080
 
 IMAGE_NAME=selecta
 TAG=latest
@@ -27,11 +27,7 @@ run_local:
 	docker run --rm -it $(IMAGE_NAME):$(TAG)
 
 build_app:
-	# First run this
 	# uv run pyinstaller --noconfirm --onedir --windowed selecta.py
-	# Then manually enter the datas in the .spec
-	# datas=[("src/selecta/yamnet-tensorflow2-yamnet-v1", "yamnet-tensorflow2-yamnet-v1")]
-	# Then run this each time after that
 	uv run pyinstaller selecta.spec
 
 
