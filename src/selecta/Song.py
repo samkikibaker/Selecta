@@ -2,7 +2,6 @@ import librosa
 import numpy as np
 
 from pathlib import Path
-from tensorflow_hub import load
 
 from selecta.logger import generate_logger
 from selecta.utils import resource_path
@@ -14,9 +13,15 @@ yamnet_model = None
 
 def init_yamnet():
     global yamnet_model
-    yamnet_model_path = resource_path("yamnet-tensorflow2-yamnet-v1")
-    logger.info(f"YAMNet model path: {yamnet_model_path}")
-    yamnet_model = load(str(yamnet_model_path))
+    if yamnet_model is None:
+        try:
+            from tensorflow_hub import load
+            yamnet_model_path = resource_path("yamnet-tensorflow2-yamnet-v1")
+            logger.info(f"Loading YAMNet model from: {yamnet_model_path}")
+            yamnet_model = load(str(yamnet_model_path))
+        except Exception as e:
+            logger.error(f"Failed to load YAMNet model: {e}")
+            yamnet_model = None
 
 
 class Song:

@@ -1,0 +1,61 @@
+# -*- mode: python ; coding: utf-8 -*-
+
+
+a = Analysis(
+    ['selecta.py'],
+    pathex=[],
+    binaries=[],
+    datas=[
+        ("src/selecta/yamnet-tensorflow2-yamnet-v1", "yamnet-tensorflow2-yamnet-v1"),
+    ],
+    hiddenimports=[
+        "tensorflow._api.v2.compat.v1.lite.experimental.microfrontend.python.ops.audio_microfrontend_op",
+        "tensorflow_hub",
+        "tensorflow_text",
+        "scipy._cyutility"
+    ],
+    excludes=[
+        'tkinter',
+        'PyQt5.QtWebEngineWidgets',
+        'tensorflow.python._pywrap_tensorflow_internal'
+    ],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    noarchive=False,
+    optimize=0,
+)
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='selecta',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='selecta',
+)
+app = BUNDLE(
+    coll,
+    name='selecta.app',
+    icon="icon.icns",
+    bundle_identifier=None,
+)
