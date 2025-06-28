@@ -7,17 +7,17 @@ mkdir -p dist/dmg
 rm -r dist/dmg/*
 
 # Copy the app bundle to the dmg folder.
-cp -r "dist/selecta.app" dist/dmg
+cp -r "dist/Selecta.app" dist/dmg
 
 # If the DMG already exists, delete it.
-test -f "dist/selecta.dmg" && rm "dist/selecta.dmg"
+test -f "dist/Selecta.dmg" && rm "dist/Selecta.dmg"
 create-dmg \
-  --volname "selecta" \
+  --volname "Selecta" \
   --window-pos 200 120 \
   --window-size 600 300 \
   --icon-size 100 \
-  --icon "selecta.app" 175 120 \
-  --hide-extension "selecta.app" \
+  --icon "Selecta.app" 175 120 \
+  --hide-extension "Selecta.app" \
   --app-drop-link 425 120 \
-  "dist/selecta.dmg" \
+  "dist/Selecta.dmg" \
   "dist/dmg/"

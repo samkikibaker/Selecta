@@ -1,24 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
-
+# from PyInstaller.utils.hooks import collect_data_files
 
 a = Analysis(
-    ['selecta.py'],
+    ['Selecta.py'],
     pathex=[],
     binaries=[],
     datas=[
         ("src/selecta/yamnet-tensorflow2-yamnet-v1", "yamnet-tensorflow2-yamnet-v1"),
     ],
     hiddenimports=[
-        "tensorflow._api.v2.compat.v1.lite.experimental.microfrontend.python.ops.audio_microfrontend_op",
+        "scipy._cyutility",
         "tensorflow_hub",
-        "tensorflow_text",
-        "scipy._cyutility"
+        "tensorflow"
     ],
-    excludes=[
-        'tkinter',
-        'PyQt5.QtWebEngineWidgets',
-        'tensorflow.python._pywrap_tensorflow_internal'
-    ],
+    excludes=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -32,7 +27,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='selecta',
+    name='Selecta',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -51,11 +46,11 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='selecta',
+    name='Selecta',
 )
 app = BUNDLE(
     coll,
-    name='selecta.app',
+    name='Selecta.app',
     icon="icon.icns",
     bundle_identifier=None,
 )

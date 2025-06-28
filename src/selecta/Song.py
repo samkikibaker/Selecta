@@ -4,25 +4,9 @@ import numpy as np
 from pathlib import Path
 
 from selecta.logger import generate_logger
-from selecta.utils import resource_path
+from selecta.yamnet_model import yamnet_model
 
 logger = generate_logger()
-
-yamnet_model = None
-
-
-def init_yamnet():
-    global yamnet_model
-    if yamnet_model is None:
-        try:
-            from tensorflow_hub import load
-            yamnet_model_path = resource_path("yamnet-tensorflow2-yamnet-v1")
-            logger.info(f"Loading YAMNet model from: {yamnet_model_path}")
-            yamnet_model = load(str(yamnet_model_path))
-        except Exception as e:
-            logger.error(f"Failed to load YAMNet model: {e}")
-            yamnet_model = None
-
 
 class Song:
     """Class to represent a song"""
@@ -77,16 +61,22 @@ class Song:
                 max_abs_value = 1  # Avoid division by zero by setting max_abs_value to 1 where it is 0
             audio /= max_abs_value
 
+            # # Run through YamNet model to extract embeddings
+            # _, embeddings, _ = yamnet_model(audio)
+            # yamnet_embeddings = np.array(embeddings)
+
             # Run through YamNet model to extract embeddings
-            global yamnet_model
-            _, embeddings, _ = yamnet_model(audio)
-            yamnet_embeddings = np.array(embeddings)
+            outputs_dict = yamnet_model(audio)
+            class_scores = outputs_dict["output_0"].numpy()
+            yamnet_embeddings = outputs_dict["output_1"].numpy()
+            log_mel = outputs_dict["output_2"].numpy()
 
             return yamnet_embeddings
 
         except Exception as e:
             logger.error(f"Error loading or processing audio file {path}: {e}")
-            return None
+            raise e
+            # return None
 
     @staticmethod
     def collapse_matrix(arr: np.array, group_size: int = 100):

@@ -10,13 +10,9 @@ from tqdm import tqdm
 from pathlib import Path
 
 from selecta.logger import generate_logger
-from selecta.Song import Song, init_yamnet
+from selecta.Song import Song
 
 logger = generate_logger()
-
-
-def init_worker():
-    init_yamnet()
 
 
 def process_song(song_path):
@@ -69,7 +65,7 @@ class SongProcessorDesktop:
 
     def update_songs_cache(self, signals):
         new_songs = []
-        with multiprocessing.Pool(initializer=init_worker, processes=multiprocessing.cpu_count()) as pool:
+        with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
             for song in tqdm(
                 pool.imap_unordered(process_song, self.song_paths_to_process),
                 total=len(self.song_paths_to_process),
