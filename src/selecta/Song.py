@@ -15,10 +15,30 @@ class Song:
     def __init__(self, path: Path):
         self.path = path
         self.name = path.name
-        self.yamnet_embeddings = None
-        self.simplified_yamnet_embeddings = None
+        self.yamnet_embeddings = self.extract_audio_embeddings(self.path)
+        self.simplified_yamnet_embeddings = self.collapse_matrix(self.yamnet_embeddings)
+        del self.yamnet_embeddings  # Remove to reduce cache size
 
-    async def extract_audio_embeddings(self, path: Path):
+    @staticmethod
+    def extract_audio_features(path: Path):
+        """
+        Extracts audio features from a given file path using librosa.
+
+        Args:
+            path (str): The file path of the audio file.
+
+        Returns:
+            tuple: A tuple containing:
+                - audio (np.ndarray): The audio time series.
+                - sampling_rate (int): The sampling rate of the audio file.
+        """
+
+        # Load the audio file with librosa
+        audio, sampling_rate = librosa.load(path, sr=16000, mono=True, offset=0, duration=120)
+
+        return audio, sampling_rate
+
+    def extract_audio_embeddings(self, path: Path):
         """
         Extracts audio embeddings from a given file path using the YamNet model.
 
@@ -34,7 +54,7 @@ class Song:
         """
         try:
             # Extract audio
-            audio, sampling_rate = librosa.load(path, sr=16000, mono=True, offset=0, duration=120)
+            audio, sampling_rate = Song.extract_audio_features(path)
 
             # Normalize to the range [-1, 1]
             max_abs_value = float(np.max(np.abs(audio), axis=0))
@@ -46,8 +66,8 @@ class Song:
             audio_list = audio.tolist()
 
             # Post to get_embeddings endpoint
-            async with httpx.AsyncClient(timeout=10) as client:
-                response = await client.post(f"{API_URL}/get_embeddings", json={"audio": audio_list})
+            with httpx.Client() as client:
+                response = client.post(f"{API_URL}/get_embeddings", json={"audio": audio_list})
                 if response.status_code == 200:
                     yamnet_embeddings = response.json().get("yamnet_embeddings")
                     return np.array(yamnet_embeddings)
