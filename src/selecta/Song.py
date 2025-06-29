@@ -100,3 +100,10 @@ class Song:
             collapsed_matrix = np.mean(arr_full_groups, axis=1)
 
         return collapsed_matrix
+
+    @classmethod
+    def from_path(cls, path: Path):
+        song = cls(path=path)
+        song.yamnet_embeddings = song.extract_audio_embeddings(song.path)
+        song.simplified_yamnet_embeddings = song.collapse_matrix(song.yamnet_embeddings)
+        return song

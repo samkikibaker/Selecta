@@ -14,14 +14,6 @@ from selecta.Song import Song
 
 logger = generate_logger()
 
-
-def process_song(song_path):
-    song = Song(path=song_path)
-    song.yamnet_embeddings = song.extract_audio_embeddings(song.path)
-    song.simplified_yamnet_embeddings = song.collapse_matrix(song.yamnet_embeddings)
-    return song
-
-
 class SongProcessorDesktop:
     def __init__(self, email: str, local_song_paths: list[Path]):
         self.email = email
@@ -69,7 +61,7 @@ class SongProcessorDesktop:
     def update_songs_cache(self, signals):
         new_songs = []
         for song_path in tqdm(self.song_paths_to_process):
-            new_song = process_song(song_path)
+            new_song = Song.from_path(song_path)
             new_songs.append(new_song)
             self.analysis_progress_value += 1
             analysis_progress_percentage = round(100 * self.analysis_progress_value / self.analysis_progress_bar_max)
