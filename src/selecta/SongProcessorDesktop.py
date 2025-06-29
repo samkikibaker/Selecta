@@ -16,7 +16,10 @@ logger = generate_logger()
 
 
 def process_song(song_path):
-    return Song(path=song_path)
+    song = Song(path=song_path)
+    song.yamnet_embeddings = song.extract_audio_embeddings(song.path)
+    song.simplified_yamnet_embeddings = song.collapse_matrix(song.yamnet_embeddings)
+    return song
 
 
 class SongProcessorDesktop:
@@ -65,17 +68,12 @@ class SongProcessorDesktop:
 
     def update_songs_cache(self, signals):
         new_songs = []
-        with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-            for song in tqdm(
-                pool.imap_unordered(process_song, self.song_paths_to_process),
-                total=len(self.song_paths_to_process),
-            ):
-                new_songs.append(song)
-                self.analysis_progress_value += 1
-                analysis_progress_percentage = round(
-                    100 * self.analysis_progress_value / self.analysis_progress_bar_max
-                )
-                signals.analysis_progress.emit(analysis_progress_percentage)
+        for song_path in tqdm(self.song_paths_to_process):
+            new_song = process_song(song_path)
+            new_songs.append(new_song)
+            self.analysis_progress_value += 1
+            analysis_progress_percentage = round(100 * self.analysis_progress_value / self.analysis_progress_bar_max)
+            signals.analysis_progress.emit(analysis_progress_percentage)
 
         updated_songs_cache = self.songs_cache + new_songs
         return updated_songs_cache

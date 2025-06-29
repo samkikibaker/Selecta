@@ -11,7 +11,6 @@ yamnet_router = APIRouter()
 @yamnet_router.post("/get_embeddings")
 async def get_embeddings(request: Request, audio: GetEmbeddingsRequest):
     try:
-
         # Convert list to NumPy array
         audio_array = np.array(audio.audio, dtype=np.float32)
 
@@ -26,4 +25,3 @@ async def get_embeddings(request: Request, audio: GetEmbeddingsRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to extract yamnet embeddings: {e}")
-
