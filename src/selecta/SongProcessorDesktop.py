@@ -69,24 +69,46 @@ class SongProcessorDesktop:
         num_similarities_to_compute = len(upper_triangle_indices[0])
         return num_similarities_to_compute
 
-    async def process_all_songs_async(self, signals=None):
+    def update_songs_cache(self, signals):
         new_songs = []
-        tasks = [process_song_async(path) for path in self.song_paths_to_process]
-
-        for coro in tqdm_asyncio.as_completed(tasks, total=len(tasks), desc="Processing Songs"):
-            song = await coro  # Await each completed coroutine
-            if song:
+        with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+            for song in tqdm(
+                pool.imap_unordered(process_song_async(), self.song_paths_to_process),
+                total=len(self.song_paths_to_process),
+            ):
                 new_songs.append(song)
+                self.analysis_progress_value += 1
+                analysis_progress_percentage = round(
+                    100 * self.analysis_progress_value / self.analysis_progress_bar_max
+                )
+                signals.analysis_progress.emit(analysis_progress_percentage)
 
-            self.analysis_progress_value += 1
-            if signals:
-                percentage = round(100 * self.analysis_progress_value / self.analysis_progress_bar_max)
-                signals.analysis_progress.emit(percentage)
+        updated_songs_cache = self.songs_cache + new_songs
+        return updated_songs_cache
 
-        return new_songs
+    def update_songs_cache_threaded(self, signals):
+        def thread_target(song_path):
+            try:
+                return asyncio.run(process_song_async(song_path))
+            except Exception as e:
+                logger.error(f"Threaded processing failed for {song_path}: {e}")
+                return None
 
-    async def update_songs_cache_async(self, signals=None):
-        new_songs = await self.process_all_songs_async(signals)
+        new_songs = []
+        with ThreadPoolExecutor() as executor:
+            futures = {executor.submit(thread_target, path): path for path in self.song_paths_to_process}
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Processing Songs (threads)"):
+                song = future.result()
+                if song:
+                    new_songs.append(song)
+
+                # GUI progress signal
+                self.analysis_progress_value += 1
+                if signals:
+                    signals.analysis_progress.emit(
+                        round(100 * self.analysis_progress_value / self.analysis_progress_bar_max)
+                    )
+
         return self.songs_cache + new_songs
 
     def upload_songs_cache(self):
@@ -158,8 +180,7 @@ class SongProcessorDesktop:
     def run(self, signals=None):
         if signals:
             signals.status.emit("Analysing Songs...")
-        # Run the async cache update inside the synchronous method
-        self.songs_cache = asyncio.run(self.update_songs_cache_async(signals))
+        self.songs_cache = self.update_songs_cache_threaded(signals)
         self.upload_songs_cache()
         if signals:
             signals.status.emit("Computing Similarities...")
