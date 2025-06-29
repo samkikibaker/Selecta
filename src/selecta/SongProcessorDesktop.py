@@ -137,9 +137,6 @@ class SongProcessorDesktop:
             pickle.dump(self.similarity_matrix, f)
 
     def run(self, signals=None):
-        if getattr(sys, "frozen", False):
-            multiprocessing.freeze_support()
-
         if signals:
             signals.status.emit("Analysing Songs...")
         self.songs_cache = self.update_songs_cache(signals=signals)
