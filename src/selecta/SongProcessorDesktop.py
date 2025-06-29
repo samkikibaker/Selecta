@@ -4,10 +4,13 @@ import pickle
 import numpy as np
 import pandas as pd
 import multiprocessing
+import asyncio
 
 from scipy.spatial.distance import cdist
 from tqdm import tqdm
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm.asyncio import tqdm_asyncio
 
 from selecta.logger import generate_logger
 from selecta.Song import Song
@@ -15,8 +18,11 @@ from selecta.Song import Song
 logger = generate_logger()
 
 
-def process_song(song_path):
-    return Song(path=song_path)
+async def process_song_async(song_path: Path):
+    song = Song(path=song_path)
+    song.yamnet_embeddings = await song.extract_audio_embeddings(song_path)
+    song.simplified_yamnet_embeddings = song.collapse_matrix(song.yamnet_embeddings)
+    return song
 
 
 class SongProcessorDesktop:
@@ -67,7 +73,7 @@ class SongProcessorDesktop:
         new_songs = []
         with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
             for song in tqdm(
-                pool.imap_unordered(process_song, self.song_paths_to_process),
+                pool.imap_unordered(process_song_async(), self.song_paths_to_process),
                 total=len(self.song_paths_to_process),
             ):
                 new_songs.append(song)
@@ -79,6 +85,31 @@ class SongProcessorDesktop:
 
         updated_songs_cache = self.songs_cache + new_songs
         return updated_songs_cache
+
+    def update_songs_cache_threaded(self, signals):
+        def thread_target(song_path):
+            try:
+                return asyncio.run(process_song_async(song_path))
+            except Exception as e:
+                logger.error(f"Threaded processing failed for {song_path}: {e}")
+                return None
+
+        new_songs = []
+        with ThreadPoolExecutor() as executor:
+            futures = {executor.submit(thread_target, path): path for path in self.song_paths_to_process}
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Processing Songs (threads)"):
+                song = future.result()
+                if song:
+                    new_songs.append(song)
+
+                # GUI progress signal
+                self.analysis_progress_value += 1
+                if signals:
+                    signals.analysis_progress.emit(
+                        round(100 * self.analysis_progress_value / self.analysis_progress_bar_max)
+                    )
+
+        return self.songs_cache + new_songs
 
     def upload_songs_cache(self):
         local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "songs.pickle"
@@ -147,12 +178,9 @@ class SongProcessorDesktop:
             pickle.dump(self.similarity_matrix, f)
 
     def run(self, signals=None):
-        if getattr(sys, "frozen", False):
-            multiprocessing.freeze_support()
-
         if signals:
             signals.status.emit("Analysing Songs...")
-        self.songs_cache = self.update_songs_cache(signals=signals)
+        self.songs_cache = self.update_songs_cache_threaded(signals)
         self.upload_songs_cache()
         if signals:
             signals.status.emit("Computing Similarities...")
