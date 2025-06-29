@@ -1,3 +1,4 @@
+import numpy as np
 from pydantic import BaseModel, EmailStr
 
 
@@ -24,3 +25,7 @@ class PlaylistDeleteRequest(BaseModel):
 
 class ReadPlaylistsRequest(BaseModel):
     email: EmailStr
+
+
+class GetEmbeddingsRequest(BaseModel):
+    audio: list[float]

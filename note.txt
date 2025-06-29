@@ -1,5 +1,4 @@
 # -*- mode: python ; coding: utf-8 -*-
-# from PyInstaller.utils.hooks import collect_data_files
 
 a = Analysis(
     ['Selecta.py'],
@@ -8,13 +7,9 @@ a = Analysis(
     datas=[
         ("src/selecta/yamnet-tensorflow2-yamnet-v1", "yamnet-tensorflow2-yamnet-v1"),
     ],
-    hiddenimports=[
-        "scipy._cyutility",
-        "tensorflow_hub",
-        "tensorflow"
-    ],
+    hiddenimports=[],
     excludes=[],
-    hookspath=[],
+    hookspath=["hooks"],
     hooksconfig={},
     runtime_hooks=[],
     noarchive=False,

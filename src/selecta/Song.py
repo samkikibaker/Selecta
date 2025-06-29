@@ -1,10 +1,11 @@
+import httpx
 import librosa
 import numpy as np
 
 from pathlib import Path
 
 from selecta.logger import generate_logger
-from selecta.yamnet_model import yamnet_model
+from selecta.utils import API_URL
 
 logger = generate_logger()
 
@@ -61,22 +62,22 @@ class Song:
                 max_abs_value = 1  # Avoid division by zero by setting max_abs_value to 1 where it is 0
             audio /= max_abs_value
 
-            # # Run through YamNet model to extract embeddings
-            # _, embeddings, _ = yamnet_model(audio)
-            # yamnet_embeddings = np.array(embeddings)
+            # Convert to list of floats for JSON
+            audio_list = audio.tolist()
 
-            # Run through YamNet model to extract embeddings
-            outputs_dict = yamnet_model(audio)
-            class_scores = outputs_dict["output_0"].numpy()
-            yamnet_embeddings = outputs_dict["output_1"].numpy()
-            log_mel = outputs_dict["output_2"].numpy()
-
-            return yamnet_embeddings
+            # Post to get_embeddings endpoint
+            with httpx.Client() as client:
+                response = client.post(f"{API_URL}/get_embeddings", json={"audio": audio_list})
+                if response.status_code == 200:
+                    yamnet_embeddings = response.json().get("yamnet_embeddings")
+                    return np.array(yamnet_embeddings)
+                else:
+                    logger.error(f"Error calling get_embeddings endpoint: {response.text}")
+                    return None
 
         except Exception as e:
             logger.error(f"Error loading or processing audio file {path}: {e}")
-            raise e
-            # return None
+            return None
 
     @staticmethod
     def collapse_matrix(arr: np.array, group_size: int = 100):
