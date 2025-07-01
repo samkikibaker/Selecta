@@ -1,5 +1,3 @@
-import sys
-
 import pickle
 import numpy as np
 import pandas as pd
@@ -14,6 +12,11 @@ from selecta.Song import Song
 
 logger = generate_logger()
 
+
+def process_song(song_path):
+    return Song.from_path(song_path)
+
+
 class SongProcessorDesktop:
     def __init__(self, email: str, local_song_paths: list[Path]):
         self.email = email
@@ -26,8 +29,9 @@ class SongProcessorDesktop:
         self.analysis_progress_value = 0
         self.similarity_progress_value = 0
 
-    def get_similarity_matrix(self):
-        local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "similarity_matrix.pickle"
+    @staticmethod
+    def get_similarity_matrix():
+        local_path = Path(f"local_app_data_dir/cache/similarity_matrix.pickle")
         try:
             with open(local_path, "rb") as f:
                 similarity_matrix = pickle.load(f)
@@ -35,8 +39,9 @@ class SongProcessorDesktop:
             similarity_matrix = pd.DataFrame()
         return similarity_matrix
 
-    def get_songs_cache(self):
-        local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "songs.pickle"
+    @staticmethod
+    def get_songs_cache():
+        local_path = Path(f"local_app_data_dir/cache/songs.pickle")
         try:
             with open(local_path, "rb") as f:
                 songs = pickle.load(f)
@@ -60,18 +65,22 @@ class SongProcessorDesktop:
 
     def update_songs_cache(self, signals):
         new_songs = []
-        for song_path in tqdm(self.song_paths_to_process):
-            new_song = Song.from_path(song_path)
-            new_songs.append(new_song)
-            self.analysis_progress_value += 1
-            analysis_progress_percentage = round(100 * self.analysis_progress_value / self.analysis_progress_bar_max)
-            signals.analysis_progress.emit(analysis_progress_percentage)
+        with multiprocessing.Pool() as pool:
+            for new_song in tqdm(
+                pool.imap_unordered(process_song, self.song_paths_to_process), total=len(self.song_paths_to_process)
+            ):
+                new_songs.append(new_song)
+                self.analysis_progress_value += 1
+                analysis_progress_percentage = round(
+                    100 * self.analysis_progress_value / self.analysis_progress_bar_max
+                )
+                signals.analysis_progress.emit(analysis_progress_percentage)
 
         updated_songs_cache = self.songs_cache + new_songs
         return updated_songs_cache
 
     def upload_songs_cache(self):
-        local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "songs.pickle"
+        local_path = Path(f"local_app_data_dir/cache/songs.pickle")
         local_path.parent.mkdir(parents=True, exist_ok=True)
         with open(local_path, "wb") as f:
             pickle.dump(self.songs_cache, f)
@@ -130,8 +139,7 @@ class SongProcessorDesktop:
         return similarity_matrix
 
     def upload_similarity_matrix(self):
-        local_path = Path.home() / "Library" / "Application Support" / "Selecta" / "cache" / "similarity_matrix.pickle"
-
+        local_path = Path(f"local_app_data_dir/cache/similarity_matrix.pickle")
         local_path.parent.mkdir(parents=True, exist_ok=True)
         with open(local_path, "wb") as f:
             pickle.dump(self.similarity_matrix, f)

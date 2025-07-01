@@ -1,12 +1,10 @@
 import os
 import logging
 
-from pathlib import Path
-
+from selecta.utils import log_dir
 
 def generate_logger(debug_mode=False):
     # Define a log directory for the app logs
-    log_dir = Path.home() / "Library" / "Logs" / "Selecta"
     os.makedirs(log_dir, exist_ok=True)
 
     # Define the log file path
