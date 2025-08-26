@@ -14,6 +14,7 @@ from desktop_app.PlaylistsPage import PlaylistsPage
 from desktop_app.SongsPage import SongsPage
 from desktop_app.AnalysePage import AnalysePage
 from selecta.logger import generate_logger
+from selecta.utils import local_app_data_dir
 
 # Logger
 logger = generate_logger()
@@ -74,7 +75,7 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def get_songs_cache():
-        local_path = Path(f"local_app_data_dir/cache/songs.pickle")
+        local_path = Path(f"{local_app_data_dir}/cache/songs.pickle")
         try:
             with open(local_path, "rb") as f:
                 songs = pickle.load(f)
@@ -85,7 +86,7 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def get_similarity_matrix_cache():
-        local_path = Path(f"local_app_data_dir/cache/similarity_matrix.pickle")
+        local_path = Path(f"{local_app_data_dir}/cache/similarity_matrix.pickle")
         try:
             with open(local_path, "rb") as f:
                 similarity_matrix_df = pickle.load(f)

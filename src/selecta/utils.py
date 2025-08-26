@@ -14,10 +14,11 @@ def get_local_app_data_dir():
     if sys.platform == "darwin":  # macOS
         return Path.home() / "Library" / "Application Support" / "Selecta"
     elif sys.platform == "win32":  # Windows
-        return Path(os.getenv('APPDATA')) / "Selecta"  # usually Roaming AppData
+        return Path(os.getenv("APPDATA")) / "Selecta"  # usually Roaming AppData
     else:
         # Linux / other - use XDG base dir spec
-        return Path(os.getenv('XDG_CONFIG_HOME', Path.home() / ".config")) / "Selecta"
+        return Path(os.getenv("XDG_CONFIG_HOME", Path.home() / ".config")) / "Selecta"
+
 
 def get_log_dir():
     if sys.platform == "darwin":
@@ -25,19 +26,19 @@ def get_log_dir():
         return Path.home() / "Library" / "Logs" / "Selecta"
     elif sys.platform == "win32":
         # Windows logs path, using LOCALAPPDATA for logs
-        local_app_data = os.getenv('LOCALAPPDATA')
+        local_app_data = os.getenv("LOCALAPPDATA")
         if local_app_data:
             return Path(local_app_data) / "Selecta" / "Logs"
         else:
             # fallback to APPDATA if LOCALAPPDATA not set
-            app_data = os.getenv('APPDATA', Path.home() / "AppData" / "Roaming")
+            app_data = os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")
             return Path(app_data) / "Selecta" / "Logs"
     else:
         # Linux / Unix-like, use ~/.local/share/<app>/logs or ~/.cache/<app>/logs
-        xdg_data_home = os.getenv('XDG_DATA_HOME', Path.home() / ".local" / "share")
+        xdg_data_home = os.getenv("XDG_DATA_HOME", Path.home() / ".local" / "share")
         return Path(xdg_data_home) / "Selecta" / "logs"
-    
-    
+
+
 def resource_path(relative_path: str) -> Path:
     """Get absolute path to resource, works for dev and for PyInstaller .app bundle"""
     if hasattr(sys, "_MEIPASS"):  # PyInstaller uses _MEIPASS
