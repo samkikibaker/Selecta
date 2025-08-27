@@ -156,3 +156,6 @@ class SongProcessorDesktop:
         self.upload_similarity_matrix()
         if signals:
             signals.status.emit("Done")
+            signals.analysis_progress.emit(0)
+            signals.similarity_progress.emit(0)
+            signals.status.emit("")

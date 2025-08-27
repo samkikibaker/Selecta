@@ -7,6 +7,8 @@ API_URL = "http://localhost:8080"
 
 import os
 import sys
+import pickle
+import pandas as pd
 from pathlib import Path
 
 
@@ -44,6 +46,37 @@ def resource_path(relative_path: str) -> Path:
     if hasattr(sys, "_MEIPASS"):  # PyInstaller uses _MEIPASS
         return Path(sys._MEIPASS) / relative_path
     return Path(__file__).parent / relative_path
+
+
+def get_songs_cache():
+    local_path = Path(f"{local_app_data_dir}/cache/songs.pickle")
+    try:
+        with open(local_path, "rb") as f:
+            songs = pickle.load(f)
+        songs_df = pd.DataFrame([{"name": song.name, "location": song.path} for song in songs])
+    except FileNotFoundError:
+        songs_df = pd.DataFrame(columns=["name", "location"])
+    return songs_df
+
+
+def get_similarity_matrix_cache():
+    local_path = Path(f"{local_app_data_dir}/cache/similarity_matrix.pickle")
+    try:
+        with open(local_path, "rb") as f:
+            similarity_matrix_df = pickle.load(f)
+    except FileNotFoundError:
+        similarity_matrix_df = pd.DataFrame()
+    return similarity_matrix_df
+
+
+def get_playlists_cache():
+    local_path = Path(f"{local_app_data_dir}/cache/playlists.pickle")
+    try:
+        with open(local_path, "rb") as f:
+            playlists_df = pickle.load(f)
+    except FileNotFoundError:
+        playlists_df = pd.DataFrame(columns=["name", "songs"])
+    return playlists_df
 
 
 local_app_data_dir = get_local_app_data_dir()

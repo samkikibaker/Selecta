@@ -2,7 +2,6 @@ import pickle
 from pathlib import Path
 import pandas as pd
 
-import httpx
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QWidget,
@@ -31,7 +30,7 @@ import tempfile
 from zipfile import ZipFile
 
 from selecta.logger import generate_logger
-from selecta.utils import API_URL, local_app_data_dir
+from selecta.utils import local_app_data_dir, get_playlists_cache, get_songs_cache, get_similarity_matrix_cache
 
 # Logger
 logger = generate_logger()
@@ -152,8 +151,6 @@ class PlaylistWidget(QWidget):
             QMessageBox.critical(self, "Error", "An error occurred while deleting the playlist.")
 
 
-
-
 class CreatePlaylistDialog(QDialog):
     def __init__(self, song_names):
         super().__init__()
@@ -186,14 +183,13 @@ class CreatePlaylistDialog(QDialog):
 
 
 class PlaylistsPanel(QWidget):
-    def __init__(self, email=None, songs_df=None, similarity_matrix_df=None, access_token=None):
+    def __init__(self, email=None, access_token=None):
         super().__init__()
         self.email = email
         self.access_token = access_token
-        self.songs_df = songs_df
-        self.similarity_matrix_df = similarity_matrix_df
-
-        self.playlists = self.get_playlists_cache()
+        self.songs_df = get_songs_cache()
+        self.similarity_matrix_df = get_similarity_matrix_cache()
+        self.playlists = get_playlists_cache()
 
         # Main Layout
         self.layout = QVBoxLayout()
@@ -216,17 +212,7 @@ class PlaylistsPanel(QWidget):
 
         self.layout.addWidget(self.scroll_area)
 
-        self.refresh(self.songs_df, self.similarity_matrix_df)
-
-    @staticmethod
-    def get_playlists_cache():
-        local_path = Path(f"{local_app_data_dir}/cache/playlists.pickle")
-        try:
-            with open(local_path, "rb") as f:
-                playlists_df = pickle.load(f)
-        except FileNotFoundError:
-            playlists_df = pd.DataFrame(columns=["name", "songs"])
-        return playlists_df
+        self.refresh()
 
     def create_playlist_dialog(self):
         if self.songs_df is None or self.similarity_matrix_df is None:
@@ -238,7 +224,7 @@ class PlaylistsPanel(QWidget):
             name, root_song, n = dialog.get_values()
             self.generate_playlist(name, root_song, n)
 
-        self.refresh(self.songs_df, self.similarity_matrix_df)
+        self.refresh()
 
     def generate_playlist(self, name, root_song, n):
         if root_song not in self.similarity_matrix_df.index:
@@ -246,15 +232,16 @@ class PlaylistsPanel(QWidget):
             return
 
         similarities = self.similarity_matrix_df.loc[root_song]
-        most_similar = similarities.sort_values(ascending=True, na_position="first")
+        most_similar = similarities.sort_values(ascending=True)
         most_similar = most_similar[most_similar.index != root_song]
-        playlist_songs = most_similar.head(n - 1).index.tolist()
+        playlist_songs = most_similar.head(n).index.tolist()
         playlist_songs = [root_song] + playlist_songs
 
         self.update_playlists_cache(name, playlist_songs)
 
-    def update_playlists_cache(self, name, songs):
-        playlists_df = self.get_playlists_cache()
+    @staticmethod
+    def update_playlists_cache(name, songs):
+        playlists_df = get_playlists_cache()
         playlists_df.loc[len(playlists_df)] = {"name": name, "songs": songs}
         local_path = Path(f"{local_app_data_dir}/cache/playlists.pickle")
         local_path.parent.mkdir(parents=True, exist_ok=True)
@@ -273,12 +260,12 @@ class PlaylistsPanel(QWidget):
                 playlist_name=row.name,
                 songs=row.songs,
                 songs_df=self.songs_df,
-                refresh_callback=lambda: self.refresh(self.songs_df, self.similarity_matrix_df),
+                refresh_callback=lambda: self.refresh(),
             )
             self.scroll_layout.addWidget(widget)
 
-    def refresh(self, songs_df, similarity_matrix_df):
-        self.songs_df = songs_df
-        self.similarity_matrix_df = similarity_matrix_df
-        self.playlists = self.get_playlists_cache()
+    def refresh(self):
+        self.songs_df = get_songs_cache()
+        self.similarity_matrix_df = get_similarity_matrix_cache()
+        self.playlists = get_playlists_cache()
         self.display_playlists()

@@ -1,7 +1,6 @@
-from pathlib import Path
-
 import pandas as pd
 
+from pathlib import Path
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtCore import Qt, QThreadPool
 from PyQt5.QtWidgets import (
@@ -19,15 +18,16 @@ from PyQt5.QtWidgets import (
 )
 
 from desktop_app.AnalysisWorker import AnalysisWorker
+from selecta.utils import get_similarity_matrix_cache, get_songs_cache
 
 
 class SongsPanel(QWidget):
-    def __init__(self, email: str = None, access_token: str = None, songs_df=None, similarity_matrix_df=None):
+    def __init__(self, email: str = None, access_token: str = None):
         super().__init__()
         self.email = email
         self.access_token = access_token
-        self.songs_df = songs_df
-        self.similarity_matrix_df = similarity_matrix_df
+        self.songs_df = get_songs_cache()
+        self.similarity_matrix_df = get_similarity_matrix_cache()
         self.added_songs_df = pd.DataFrame()
         self.new_songs_df = pd.DataFrame()
 
@@ -104,15 +104,24 @@ class SongsPanel(QWidget):
             audio_files = list(Path(folder_path).rglob("*.mp3"))
             for file_path in audio_files:
                 added_songs.append({"name": file_path.name, "location": file_path})
-            self.added_songs_df = pd.DataFrame(added_songs)
-            self.new_songs_df = pd.concat([self.added_songs_df, self.songs_df, self.songs_df]).drop_duplicates(
-                keep=False
-            )
 
-            self.table_model = self.create_table_model(self.new_songs_df)
+            self.added_songs_df = pd.DataFrame(added_songs)
+
+            # Filter to songs not yet added
+            subset_cols = ["name", "location"]
+            self.new_songs_df = self.added_songs_df[
+                ~self.added_songs_df[subset_cols].isin(self.songs_df[subset_cols]).all(axis=1)
+            ]
+
+            # Update the main table model with all songs
+            self.table_model = self.create_table_model(pd.concat([self.songs_df, self.added_songs_df]))
             self.table_view.setModel(self.table_model)
 
-            QMessageBox.information(self, "Added Songs", f"Added {len(self.new_songs_df)} songs not already analysed")
+            QMessageBox.information(
+                self,
+                "Added Songs",
+                f"Added {len(self.new_songs_df)} new songs. Total songs: {len(self.new_songs_df) + len(self.songs_df)}",
+            )
 
     def analyse_songs(self):
         if self.new_songs_df.empty:
@@ -121,16 +130,14 @@ class SongsPanel(QWidget):
 
         worker = AnalysisWorker(new_songs_df=self.new_songs_df, email=self.email)
 
-        # Reset progress bars
-        self.analysis_progress_bar.setValue(0)
-        self.similarity_progress_bar.setValue(0)
-
         # Connect signals to slots
         worker.signals.status.connect(self.update_status)
         worker.signals.analysis_progress.connect(self.update_analysis_progress)
         worker.signals.similarity_progress.connect(self.update_similarity_progress)
 
         self.threadpool.start(worker)
+
+        self.refresh_from_caches()
 
     def update_status(self, message: str):
         self.status_label.setText(message)
@@ -141,11 +148,6 @@ class SongsPanel(QWidget):
     def update_similarity_progress(self, value: int):
         self.similarity_progress_bar.setValue(value)
 
-    def refresh(self, songs_df, similarity_matrix_df):
-        self.songs_df = songs_df
-        self.similarity_matrix_df = similarity_matrix_df
-
-        self.new_songs_df = pd.concat([self.added_songs_df, self.songs_df, self.songs_df]).drop_duplicates(keep=False)
-
-        self.table_model = self.create_table_model(self.new_songs_df)
-        self.table_view.setModel(self.table_model)
+    def refresh_from_caches(self):
+        self.songs_df = get_songs_cache()
+        self.similarity_matrix_df = get_similarity_matrix_cache()
