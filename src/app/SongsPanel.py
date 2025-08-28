@@ -118,14 +118,14 @@ class SongsPanel(QWidget):
             self.table_view.setModel(self.table_model)
 
             QMessageBox.information(
-                self,
+                None,
                 "Added Songs",
                 f"Added {len(self.new_songs_df)} new songs. Total songs: {len(self.new_songs_df) + len(self.songs_df)}",
             )
 
     def analyse_songs(self):
         if self.new_songs_df.empty:
-            QMessageBox.warning(self, "No Songs", "Please add new songs before analysing.")
+            QMessageBox.warning(None, "No Songs", "Please add new songs before analysing.")
             return
 
         worker = AnalysisWorker(new_songs_df=self.new_songs_df, email=self.email)

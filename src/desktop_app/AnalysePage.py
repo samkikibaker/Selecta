@@ -118,11 +118,11 @@ class AnalysePage(QMainWindow):
             self.table_model = self.create_table_model(self.new_songs_df)
             self.table_view.setModel(self.table_model)
 
-            QMessageBox.information(self, "Added Songs", f"Added {len(self.new_songs_df)} songs not already analysed")
+            QMessageBox.information(None, "Added Songs", f"Added {len(self.new_songs_df)} songs not already analysed")
 
     def analyse_songs(self):
         if self.new_songs_df.empty:
-            QMessageBox.warning(self, "No Songs", "Please add new songs before analysing.")
+            QMessageBox.warning(None, "No Songs", "Please add new songs before analysing.")
             return
 
         worker = AnalysisWorker(new_songs_df=self.new_songs_df, email=self.email)

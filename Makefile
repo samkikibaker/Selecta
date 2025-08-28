@@ -15,5 +15,4 @@ build_app:
 	uv run pyinstaller selecta.spec --noconfirm
 
 run_app:
-	/Applications/Selecta.app/Contents/MacOS/Selecta
-	# open /Applications/Selecta.app
+	/Users/sambaker/Documents/GitHub/Selecta/dist/Selecta/Selecta

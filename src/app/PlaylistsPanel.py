@@ -1,6 +1,5 @@
 import pickle
 from pathlib import Path
-import pandas as pd
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
@@ -37,14 +36,14 @@ logger = generate_logger()
 
 
 class PlaylistWidget(QWidget):
-    def __init__(self, email, playlist_name, songs, songs_df, refresh_callback=None):
+    def __init__(self, email, playlist_name, songs, songs_df):
         super().__init__()
+        self.playlists_df = get_playlists_cache()
         self.email = email
         self.playlist_name = playlist_name
         self.songs = songs
         self.songs_df = songs_df
         self.expanded = False
-        self.refresh_callback = refresh_callback
 
         self.layout = QVBoxLayout()
         self.toggle_button = QPushButton(f"▶ {self.playlist_name}")
@@ -104,7 +103,7 @@ class PlaylistWidget(QWidget):
                             song_paths.append(dest_path)
 
                 if not song_paths:
-                    QMessageBox.warning(self, "Download Failed", "No valid song files found for this playlist.")
+                    QMessageBox.warning(None, "Download Failed", "No valid song files found for this playlist.")
                     return
 
                 zip_file_path, _ = QFileDialog.getSaveFileName(
@@ -117,38 +116,34 @@ class PlaylistWidget(QWidget):
                     for path in song_paths:
                         zipf.write(path, os.path.basename(path))
 
-                QMessageBox.information(self, "Download Complete", f"Playlist saved:\n{zip_file_path}")
+                QMessageBox.information(None, "Download Complete", f"Playlist saved:\n{zip_file_path}")
 
         except Exception as e:
             logger.error(f"Error downloading playlist: {e}")
-            QMessageBox.critical(self, "Error", "An error occurred while creating the playlist zip file.")
+            QMessageBox.critical(None, "Error", "An error occurred while creating the playlist zip file.")
 
     def delete_playlist(self, name):
         try:
-            # Load existing playlists
-            local_path = Path(f"{local_app_data_dir}/cache/playlists.pickle")
-            if not local_path.exists():
-                QMessageBox.warning(self, "Delete Failed", "No cached playlists found.")
-                return
-
-            playlists_df = pd.read_pickle(local_path)
-
             # Drop playlist by name
-            playlists_df = playlists_df[playlists_df["name"] != name]
+            self.playlists_df = self.playlists_df[self.playlists_df["name"] != name]
 
             # Save back to cache
+            local_path = Path(f"{local_app_data_dir}/cache/playlists.pickle")
             with open(local_path, "wb") as f:
-                pickle.dump(playlists_df, f)
+                pickle.dump(self.playlists_df, f)
 
             # Refresh UI
-            if self.refresh_callback:
-                self.refresh_callback()
+            self.setParent(None)
 
-            QMessageBox.information(self, "Playlist Deleted", f'"{name}" has been removed.')
+            QMessageBox.information(None, "Playlist Deleted", f"{name} has been deleted.")
 
         except Exception as e:
             logger.error(f"Error deleting playlist {name}: {e}")
-            QMessageBox.critical(self, "Error", "An error occurred while deleting the playlist.")
+            QMessageBox.critical(None, "Error", "An error occurred while deleting the playlist.")
+
+    def refresh(self):
+        self.songs_df = get_songs_cache()
+        self.playlists_df = get_playlists_cache()
 
 
 class CreatePlaylistDialog(QDialog):
@@ -179,7 +174,7 @@ class CreatePlaylistDialog(QDialog):
         layout.addRow(self.buttons)
 
     def get_values(self):
-        return (self.name_input.text(), self.root_song_combo.currentText(), self.num_songs_spin.value())
+        return self.name_input.text(), self.root_song_combo.currentText(), self.num_songs_spin.value()
 
 
 class PlaylistsPanel(QWidget):
@@ -189,7 +184,7 @@ class PlaylistsPanel(QWidget):
         self.access_token = access_token
         self.songs_df = get_songs_cache()
         self.similarity_matrix_df = get_similarity_matrix_cache()
-        self.playlists = get_playlists_cache()
+        self.playlists_df = get_playlists_cache()
 
         # Main Layout
         self.layout = QVBoxLayout()
@@ -212,11 +207,13 @@ class PlaylistsPanel(QWidget):
 
         self.layout.addWidget(self.scroll_area)
 
-        self.refresh()
+        self.display_playlists()
 
     def create_playlist_dialog(self):
+        self.refresh()
+
         if self.songs_df is None or self.similarity_matrix_df is None:
-            QMessageBox.warning(self, "Missing Data", "Songs or similarity matrix not available.")
+            QMessageBox.warning(None, "Missing Data", "Songs or similarity matrix not available.")
             return
 
         dialog = CreatePlaylistDialog(self.songs_df["name"].tolist())
@@ -228,7 +225,7 @@ class PlaylistsPanel(QWidget):
 
     def generate_playlist(self, name, root_song, n):
         if root_song not in self.similarity_matrix_df.index:
-            QMessageBox.warning(self, "Invalid Root Song", "Selected root song not found in similarity matrix.")
+            QMessageBox.warning(None, "Invalid Root Song", "Selected root song not found in similarity matrix.")
             return
 
         similarities = self.similarity_matrix_df.loc[root_song]
@@ -254,18 +251,17 @@ class PlaylistsPanel(QWidget):
             if widget_to_remove:
                 widget_to_remove.setParent(None)
 
-        for row in self.playlists.itertuples(index=False):
+        for row in self.playlists_df.itertuples(index=False):
             widget = PlaylistWidget(
                 email=self.email,
                 playlist_name=row.name,
                 songs=row.songs,
                 songs_df=self.songs_df,
-                refresh_callback=lambda: self.refresh(),
             )
             self.scroll_layout.addWidget(widget)
 
     def refresh(self):
         self.songs_df = get_songs_cache()
         self.similarity_matrix_df = get_similarity_matrix_cache()
-        self.playlists = get_playlists_cache()
+        self.playlists_df = get_playlists_cache()
         self.display_playlists()

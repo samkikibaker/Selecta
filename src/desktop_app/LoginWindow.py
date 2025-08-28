@@ -61,7 +61,7 @@ class LoginWindow(QMainWindow):
         email = self.email_input.text().strip()
         password = self.password_input.text().strip()
         if not email or not password:
-            QMessageBox.warning(self, "Missing Fields", "Email and password are required.")
+            QMessageBox.warning(None, "Missing Fields", "Email and password are required.")
             return
 
         # Post to /login endpoint to get access token
@@ -74,4 +74,4 @@ class LoginWindow(QMainWindow):
                 self.close()
             else:
                 error_message = response.json().get("detail", "Login failed.")
-                QMessageBox.warning(self, "Login Failed", error_message)
+                QMessageBox.warning(None, "Login Failed", error_message)

@@ -2,7 +2,7 @@ import sys
 import multiprocessing
 
 from PyQt5.QtWidgets import QApplication
-from desktop_app.LoginWindow import LoginWindow
+from app.MainWindow import MainWindow
 from selecta.logger import generate_logger
 
 multiprocessing.freeze_support()
@@ -13,7 +13,7 @@ logger = generate_logger()
 
 def run_app():
     app = QApplication(sys.argv)
-    window = LoginWindow()
+    window = MainWindow()
     window.show()
     sys.exit(app.exec())
 

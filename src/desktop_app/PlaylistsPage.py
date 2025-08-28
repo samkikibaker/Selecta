@@ -103,7 +103,7 @@ class PlaylistWidget(QWidget):
                             song_paths.append(dest_path)
 
                 if not song_paths:
-                    QMessageBox.warning(self, "Download Failed", "No valid song files found for this playlist.")
+                    QMessageBox.warning(None, "Download Failed", "No valid song files found for this playlist.")
                     return
 
                 # Ask user where to save the zip
@@ -118,11 +118,11 @@ class PlaylistWidget(QWidget):
                     for path in song_paths:
                         zipf.write(path, os.path.basename(path))
 
-                QMessageBox.information(self, "Download Complete", f"Playlist zipped and saved to:\n{zip_file_path}")
+                QMessageBox.information(None, "Download Complete", f"Playlist zipped and saved to:\n{zip_file_path}")
 
         except Exception as e:
             logger.error(f"Error downloading playlist: {e}")
-            QMessageBox.critical(self, "Error", "An error occurred while creating the playlist zip file.")
+            QMessageBox.critical(None, "Error", "An error occurred while creating the playlist zip file.")
 
     def delete_playlist(self, name):
         # Post to /login endpoint to get access token
@@ -134,7 +134,7 @@ class PlaylistWidget(QWidget):
                     self.refresh_callback()
             else:
                 error_message = response.json().get("detail", "Failed to delete playlists")
-                QMessageBox.warning(self, "Failed to delete playlists", error_message)
+                QMessageBox.warning(None, "Failed to delete playlists", error_message)
 
 
 class CreatePlaylistDialog(QDialog):
@@ -210,7 +210,7 @@ class PlaylistsPage(QMainWindow):
                 self.playlists = playlists
             else:
                 error_message = response.json().get("detail", "Failed to get playlists")
-                QMessageBox.warning(self, "Failed to get playlists", error_message)
+                QMessageBox.warning(None, "Failed to get playlists", error_message)
 
     def refresh(self, songs_df, similarity_matrix_df):
         self.songs_df = songs_df
@@ -220,7 +220,7 @@ class PlaylistsPage(QMainWindow):
 
     def create_playlist_dialog(self):
         if self.songs_df is None or self.similarity_matrix_df is None:
-            QMessageBox.warning(self, "Missing Data", "Songs or similarity matrix not available.")
+            QMessageBox.warning(None, "Missing Data", "Songs or similarity matrix not available.")
             return
 
         dialog = CreatePlaylistDialog(self.songs_df["name"].tolist())
@@ -230,7 +230,7 @@ class PlaylistsPage(QMainWindow):
 
     def generate_playlist(self, name, root_song, n):
         if root_song not in self.similarity_matrix_df.index:
-            QMessageBox.warning(self, "Invalid Root Song", "Selected root song not found in similarity matrix.")
+            QMessageBox.warning(None, "Invalid Root Song", "Selected root song not found in similarity matrix.")
             return
 
         similarities = self.similarity_matrix_df.loc[root_song]
@@ -253,7 +253,7 @@ class PlaylistsPage(QMainWindow):
                 self.display_playlists()
             else:
                 error_message = response.json().get("detail", "Failed to create playlist")
-                QMessageBox.warning(self, "Failed to create playlist", error_message)
+                QMessageBox.warning(None, "Failed to create playlist", error_message)
 
     def display_playlists(self):
         # Clear previous widgets
