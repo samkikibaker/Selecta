@@ -53,6 +53,10 @@ jobs:
         run: |
           choco install vcredist2015 -y
 
+      - name: Install tensorflow
+        run: |
+          uv run pip install tensorflow
+
       - name: Install dependencies with uv
         run: uv sync
 
