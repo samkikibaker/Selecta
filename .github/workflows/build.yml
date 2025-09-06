@@ -3,7 +3,7 @@ name: Build PyQt5 App
 on:
   push:
     branches:
-      - main
+      - build_workflow  # change to main once tested
 
 jobs:
   build-macos:
