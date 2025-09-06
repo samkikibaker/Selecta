@@ -22,7 +22,8 @@ dependencies = [
     "pyinstaller>=6.14.1",
 
     'PyQt5>=5.15.11; sys_platform == "darwin"',  # macOS
-    'PyQt5; sys_platform == "win32"',   # Windows
+    'PyQt5==5.15.11; sys_platform == "win32"',   # Windows
+    'PyQt5-Qt5==5.15.11; sys_platform == "win32"',   # Windows
 
     "python-dotenv>=1.1.0",
     "python-jose>=3.4.0",
