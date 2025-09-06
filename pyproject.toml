@@ -21,8 +21,8 @@ dependencies = [
     "pydantic[email]>=2.11.7",
     "pyinstaller>=6.14.1",
 
-    "pyqt5==5.15.9",
-    "pyqt5-qt5==5.15.9",
+    'pyqt5>=5.15.11; sys_platform == "darwin"',  # macOS only
+    'pyqt5-qt5==5.15.9; sys_platform == "win32"',  # Windows only
 
     "python-dotenv>=1.1.0",
     "python-jose>=3.4.0",
