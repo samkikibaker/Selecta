@@ -39,6 +39,7 @@ dependencies = [
 [tool.uv.dependencies."pyqt5.win32"]
 version = "5.15.9"
 
+
 # PyQt5 version for macOS only
 [tool.uv.dependencies."pyqt5.macos"]
 version = "5.15.17"
