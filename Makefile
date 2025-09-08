@@ -16,3 +16,8 @@ build_app:
 
 run_app:
 	/Users/sambaker/Documents/GitHub/Selecta/dist/Selecta/Selecta
+
+remove_workflow_runs:
+	for run_id in $(gh run list --limit 1000 --json databaseId -q '.[].databaseId'); do
+	  gh run delete $run_id
+	done
