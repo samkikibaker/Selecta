@@ -30,7 +30,7 @@ jobs:
 
       - name: Sign Code (for Apple)
         run: |
-          codesign --deep --force --sign - dist
+          codesign --deep --force --sign - dist/Selecta.app
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
