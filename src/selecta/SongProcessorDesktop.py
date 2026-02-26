@@ -19,8 +19,7 @@ def process_song(song_path):
 
 
 class SongProcessorDesktop:
-    def __init__(self, email: str, local_song_paths: list[Path]):
-        self.email = email
+    def __init__(self, local_song_paths: list[Path]):
         self.local_song_paths = local_song_paths
         self.similarity_matrix = self.get_similarity_matrix()
         self.songs_cache = self.get_songs_cache()

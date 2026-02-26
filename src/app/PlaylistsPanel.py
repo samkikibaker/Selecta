@@ -36,10 +36,9 @@ logger = generate_logger()
 
 
 class PlaylistWidget(QWidget):
-    def __init__(self, email, playlist_name, songs, songs_df):
+    def __init__(self, playlist_name, songs, songs_df):
         super().__init__()
         self.playlists_df = get_playlists_cache()
-        self.email = email
         self.playlist_name = playlist_name
         self.songs = songs
         self.songs_df = songs_df
@@ -178,10 +177,8 @@ class CreatePlaylistDialog(QDialog):
 
 
 class PlaylistsPanel(QWidget):
-    def __init__(self, email=None, access_token=None):
+    def __init__(self):
         super().__init__()
-        self.email = email
-        self.access_token = access_token
         self.songs_df = get_songs_cache()
         self.similarity_matrix_df = get_similarity_matrix_cache()
         self.playlists_df = get_playlists_cache()
@@ -253,7 +250,6 @@ class PlaylistsPanel(QWidget):
 
         for row in self.playlists_df.itertuples(index=False):
             widget = PlaylistWidget(
-                email=self.email,
                 playlist_name=row.name,
                 songs=row.songs,
                 songs_df=self.songs_df,

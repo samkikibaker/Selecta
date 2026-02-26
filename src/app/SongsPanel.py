@@ -17,15 +17,13 @@ from PyQt5.QtWidgets import (
     QFileDialog,
 )
 
-from desktop_app.AnalysisWorker import AnalysisWorker
+from app.AnalysisWorker import AnalysisWorker
 from selecta.utils import get_similarity_matrix_cache, get_songs_cache
 
 
 class SongsPanel(QWidget):
-    def __init__(self, email: str = None, access_token: str = None):
+    def __init__(self):
         super().__init__()
-        self.email = email
-        self.access_token = access_token
         self.songs_df = get_songs_cache()
         self.similarity_matrix_df = get_similarity_matrix_cache()
         self.added_songs_df = pd.DataFrame()
@@ -128,7 +126,7 @@ class SongsPanel(QWidget):
             QMessageBox.warning(None, "No Songs", "Please add new songs before analysing.")
             return
 
-        worker = AnalysisWorker(new_songs_df=self.new_songs_df, email=self.email)
+        worker = AnalysisWorker(new_songs_df=self.new_songs_df)
 
         # Connect signals to slots
         worker.signals.status.connect(self.update_status)
