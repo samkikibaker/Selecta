@@ -1,10 +1,3 @@
-MONGO_URI = "mongodb+srv://samkikibaker:gZoJKxxo4sBwxQiX@cluster0.khplbp6.mongodb.net/"
-DB = "db"
-JWT_SECRET = "12345"
-JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-API_URL = "http://localhost:8080"
-
 import os
 import sys
 import pickle
