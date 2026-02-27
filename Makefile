@@ -20,6 +20,5 @@ format:
 	uv run ruff check . --fix
 	uv run ruff format
 
-ruff:
-	uv run ruff check . --fix
-	uv run ruff format
+run:
+	uv run Selecta.py
