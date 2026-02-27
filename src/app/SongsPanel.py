@@ -37,15 +37,7 @@ class SongsPanel(QWidget):
         # Threadpool for background workers
         self.threadpool = QThreadPool()
 
-        # --- Column 1: Title ---
-        title_layout = QVBoxLayout()
-        title = QLabel("Songs")
-        title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet("font-size: 48px; font-weight: bold; margin-bottom: 16px;")
-        title_layout.addWidget(title)
-        self.panel_header.addLayout(title_layout)
-
-        # --- Column 2: Status + Progress Bars ---
+        # --- Column 1: Status + Progress Bars ---
         progress_layout = QVBoxLayout()
         self.status_label = QLabel("")
         self.analysis_progress_bar = QProgressBar()
@@ -61,7 +53,7 @@ class SongsPanel(QWidget):
         progress_layout.addWidget(self.similarity_progress_bar)
         self.panel_header.addLayout(progress_layout)
 
-        # --- Column 3: Buttons ---
+        # --- Column 2: Buttons ---
         button_layout = QVBoxLayout()
         add_songs_button = QPushButton("Add Songs")
         analyse_songs_button = QPushButton("Analyse Songs")
@@ -112,9 +104,12 @@ class SongsPanel(QWidget):
 
             # Filter to songs not yet added
             subset_cols = ["name", "location"]
-            self.new_songs_df = self.added_songs_df[
-                ~self.added_songs_df[subset_cols].isin(self.songs_df[subset_cols]).all(axis=1)
-            ]
+            if self.songs_df.empty:
+                self.new_songs_df = self.added_songs_df
+            else:
+                self.new_songs_df = self.added_songs_df[
+                    ~self.added_songs_df[subset_cols].isin(self.songs_df[subset_cols]).all(axis=1)
+                ]
 
             # Update the main table model with all songs
             self.table_model = self.create_table_model(pd.concat([self.songs_df, self.added_songs_df]))

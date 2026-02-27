@@ -187,10 +187,6 @@ class PlaylistsPanel(QWidget):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        title = QLabel("Playlists")
-        title.setStyleSheet("font-size: 20px; font-weight: bold;")
-        self.layout.addWidget(title)
-
         self.create_button = QPushButton("Create New Playlist")
         self.create_button.clicked.connect(self.create_playlist_dialog)
         self.layout.addWidget(self.create_button)
