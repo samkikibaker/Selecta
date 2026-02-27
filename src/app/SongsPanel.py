@@ -1,3 +1,5 @@
+import pickle
+
 import pandas as pd
 
 from pathlib import Path
@@ -18,13 +20,13 @@ from PyQt5.QtWidgets import (
 )
 
 from app.AnalysisWorker import AnalysisWorker
-from selecta.utils import get_similarity_matrix_cache, get_songs_cache
+from selecta.utils import get_similarity_matrix_cache, get_songs_cache, get_local_app_data_dir, get_playlists_cache
 
 
 class SongsPanel(QWidget):
     def __init__(self):
         super().__init__()
-        self.songs_df = get_songs_cache()
+        self.songs, self.songs_df = get_songs_cache()
         self.similarity_matrix_df = get_similarity_matrix_cache()
         self.added_songs_df = pd.DataFrame()
         self.new_songs_df = pd.DataFrame()
@@ -63,10 +65,13 @@ class SongsPanel(QWidget):
         button_layout = QVBoxLayout()
         add_songs_button = QPushButton("Add Songs")
         analyse_songs_button = QPushButton("Analyse Songs")
+        delete_songs_button = QPushButton("Delete Songs")
         add_songs_button.clicked.connect(self.select_folder)
         analyse_songs_button.clicked.connect(self.analyse_songs)
+        delete_songs_button.clicked.connect(self.delete_selected_songs)
         button_layout.addWidget(add_songs_button)
         button_layout.addWidget(analyse_songs_button)
+        button_layout.addWidget(delete_songs_button)
         self.panel_header.addLayout(button_layout)
 
         # --- Table View ---
@@ -135,7 +140,7 @@ class SongsPanel(QWidget):
 
         self.threadpool.start(worker)
 
-        self.refresh_from_caches()
+        self.refresh()
 
     def update_status(self, message: str):
         self.status_label.setText(message)
@@ -146,6 +151,57 @@ class SongsPanel(QWidget):
     def update_similarity_progress(self, value: int):
         self.similarity_progress_bar.setValue(value)
 
-    def refresh_from_caches(self):
-        self.songs_df = get_songs_cache()
+    def delete_selected_songs(self):
+        self.refresh()
+
+        selection_model = self.table_view.selectionModel()
+        selected_rows = selection_model.selectedRows()  # returns QModelIndex list
+
+        if not selected_rows:
+            return  # Nothing selected
+
+        # Extract song names from the selected rows
+        song_names_to_delete = []
+        for index in selected_rows:
+            row = index.row()
+            song_name = self.songs_df.iloc[row]["name"]
+            song_names_to_delete.append(song_name)
+
+        # Call your existing function
+        self.delete_songs(song_names_to_delete)
+
+        # Update the table view to reflect changes
+        self.refresh()
+
+        self.table_model = self.create_table_model(self.songs_df)
+        self.table_view.setModel(self.table_model)
+
+    def delete_songs(self, song_names):
+        local_app_data_dir = get_local_app_data_dir()
+        songs_cache, _ = get_songs_cache()
+        similarity_matrix_cache = get_similarity_matrix_cache()
+        playlists_cache = get_playlists_cache()
+
+        # Filter songs and save back to cache
+        songs_cache_updated = [song for song in songs_cache if song.name not in song_names]
+        songs_cache_path = Path(f"{local_app_data_dir}/cache/songs.pickle")
+        with open(songs_cache_path, "wb") as f:
+            pickle.dump(songs_cache_updated, f)
+
+        # Filter similarity matrix cols and index and save back to cache
+        similarity_matrix_cache_updated = similarity_matrix_cache[[col for col in similarity_matrix_cache.columns if col not in song_names]]
+        similarity_matrix_cache_updated = similarity_matrix_cache_updated[~similarity_matrix_cache_updated.index.isin(song_names)]
+        similarity_matrix_cache_path = Path(f"{local_app_data_dir}/cache/similarity_matrix.pickle")
+        with open(similarity_matrix_cache_path, "wb") as f:
+            pickle.dump(similarity_matrix_cache_updated, f)
+
+        # Filter playlists and save back to cache
+        playlists_cache_updated = playlists_cache.copy()
+        playlists_cache["songs"] = playlists_cache["songs"].apply(lambda x: [song_name for song_name in x if song_name not in song_names])
+        playlists_cache_path = Path(f"{local_app_data_dir}/cache/playlists.pickle")
+        with open(playlists_cache_path, "wb") as f:
+            pickle.dump(playlists_cache_updated, f)
+
+    def refresh(self):
+        self.songs, self.songs_df = get_songs_cache()
         self.similarity_matrix_df = get_similarity_matrix_cache()

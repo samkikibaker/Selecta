@@ -9,7 +9,7 @@ from pathlib import Path
 
 from selecta.logger import generate_logger
 from selecta.Song import Song
-from selecta.utils import local_app_data_dir
+from selecta.utils import local_app_data_dir, get_similarity_matrix_cache, get_songs_cache
 
 logger = generate_logger()
 
@@ -21,33 +21,13 @@ def process_song(song_path):
 class SongProcessorDesktop:
     def __init__(self, local_song_paths: list[Path]):
         self.local_song_paths = local_song_paths
-        self.similarity_matrix = self.get_similarity_matrix()
-        self.songs_cache = self.get_songs_cache()
+        self.similarity_matrix = get_similarity_matrix_cache()
+        self.songs_cache, _ = get_songs_cache()
         self.song_paths_to_process = self.compute_song_paths_to_process()
         self.analysis_progress_bar_max = len(self.song_paths_to_process)
         self.similarity_progress_bar_max = self.compute_similarity_progress_bar_max_value()
         self.analysis_progress_value = 0
         self.similarity_progress_value = 0
-
-    @staticmethod
-    def get_similarity_matrix():
-        local_path = Path(f"{local_app_data_dir}/cache/similarity_matrix.pickle")
-        try:
-            with open(local_path, "rb") as f:
-                similarity_matrix = pickle.load(f)
-        except FileNotFoundError:
-            similarity_matrix = pd.DataFrame()
-        return similarity_matrix
-
-    @staticmethod
-    def get_songs_cache():
-        local_path = Path(f"{local_app_data_dir}/cache/songs.pickle")
-        try:
-            with open(local_path, "rb") as f:
-                songs = pickle.load(f)
-        except FileNotFoundError:
-            songs = []
-        return songs
 
     def compute_song_paths_to_process(self):
         song_paths_to_process = []

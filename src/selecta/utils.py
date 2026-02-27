@@ -48,8 +48,9 @@ def get_songs_cache():
             songs = pickle.load(f)
         songs_df = pd.DataFrame([{"name": song.name, "location": song.path} for song in songs])
     except FileNotFoundError:
+        songs = []
         songs_df = pd.DataFrame(columns=["name", "location"])
-    return songs_df
+    return songs, songs_df
 
 
 def get_similarity_matrix_cache():

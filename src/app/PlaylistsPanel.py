@@ -141,7 +141,7 @@ class PlaylistWidget(QWidget):
             QMessageBox.critical(None, "Error", "An error occurred while deleting the playlist.")
 
     def refresh(self):
-        self.songs_df = get_songs_cache()
+        self.songs, self.songs_df = get_songs_cache()
         self.playlists_df = get_playlists_cache()
 
 
@@ -179,7 +179,7 @@ class CreatePlaylistDialog(QDialog):
 class PlaylistsPanel(QWidget):
     def __init__(self):
         super().__init__()
-        self.songs_df = get_songs_cache()
+        self.songs, self.songs_df = get_songs_cache()
         self.similarity_matrix_df = get_similarity_matrix_cache()
         self.playlists_df = get_playlists_cache()
 
@@ -257,7 +257,7 @@ class PlaylistsPanel(QWidget):
             self.scroll_layout.addWidget(widget)
 
     def refresh(self):
-        self.songs_df = get_songs_cache()
+        self.songs, self.songs_df = get_songs_cache()
         self.similarity_matrix_df = get_similarity_matrix_cache()
         self.playlists_df = get_playlists_cache()
         self.display_playlists()
