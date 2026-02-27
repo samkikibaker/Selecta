@@ -1,19 +1,24 @@
-docker_clean:
-	# Remove unused images, containers, volumes, and networks
-	docker system prune -af
+.ONESHELL:
+SHELL := /bin/bash
 
-ruff:
+setup:
+	echo "Installing uv from Astral..."
+	unameOut=$$(uname -s); \
+	if [ "$$unameOut" = "Darwin" ] || [ "$$unameOut" = "Linux" ]; then \
+		echo "Detected Unix-like OS: $$unameOut"; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+	elif [ "$$OS" = "Windows_NT" ]; then \
+		echo "Detected Windows OS"; \
+		powershell -ExecutionPolicy ByPass -Command "irm https://astral.sh/uv/install.ps1 | iex"; \
+	else \
+		echo "Unsupported OS: $$unameOut"; \
+		exit 1; \
+	fi; \
+	uv sync
+
+format:
 	uv run ruff check . --fix
 	uv run ruff format
 
-run_api:
-	cd src && cd backend && uvicorn api:app --reload --host 0.0.0.0 --port 8080
-	# cd src && cd backend && gunicorn -w 4 -k uvicorn.workers.UvicornWorker api:app --bind 0.0.0.0:8080 --reload
-
-build_app:
-	# uv run pyinstaller --noconfirm --onedir --windowed Selecta.py
-	uv run pyinstaller selecta.spec --noconfirm
-
-run_app:
-	/Applications/Selecta.app/Contents/MacOS/Selecta
-	# open /Applications/Selecta.app
+run:
+	uv run Selecta.py

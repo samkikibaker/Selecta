@@ -3,6 +3,7 @@ import logging
 
 from selecta.utils import log_dir
 
+
 def generate_logger(debug_mode=False):
     # Define a log directory for the app logs
     os.makedirs(log_dir, exist_ok=True)
